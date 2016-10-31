@@ -144,6 +144,8 @@ def gearScriptSetUp(cur):
 	gearScriptWindow = tk.Tk()
 	gearScriptWindow.title("Framework Generator")
 
+
+	#----------------------------need to redo this, doesn't actually do anything yet----------------------------#
 	label1 = Label(gearScriptWindow, text = "Side")
 	label1.grid(row=0, sticky=W)
 	unit_side_blu = Radiobutton(gearScriptWindow,text="Blufor",value = 1, variable = 1)
@@ -175,6 +177,7 @@ def gearScriptSetUp(cur):
 	unit_map_yes.grid(row=1, column=1)
 	unit_map_no = Radiobutton(gearScriptWindow,text="No",value = 2, variable = 2)
 	unit_map_no.grid(row=2, column=1)
+	#-----------------------------------------------------------------------------------------------------------#
 
 	generateGearScript = tk.Button(gearScriptWindow,text="Generate Gear Script",command=lambda: GenerateGearScript(cur))
 	generateGearScript.grid(row=10, column=1, sticky=W)
@@ -188,8 +191,8 @@ def GenerateGearScript(cur):
 		file.write('if (_isMan) then {\n')
 		file.write('removeBackpack _unit;\nremoveAllWeapons _unit;\nremoveAllItemsWithMagazines _unit;\nremoveAllAssignedItems _unit;\n')
 		file.write('#include "f_assignGear_clothes.sqf";\n\n')
-		file.write('_unit addItem _firstaid;\n')
-		file.write('_unit linkItem _nvg;\n')
+		file.write('_unit addItem "FirstAidKit";\n')
+		file.write('_unit linkItem "";\n')
 		file.write('_unit linkItem "ItemMap";;\n')
 		file.write('_unit linkItem "ItemCompass";\n')
 		file.write('_unit linkItem "ItemRadio";\n')
@@ -197,8 +200,8 @@ def GenerateGearScript(cur):
 		file.write('_unit linkItem "ItemGPS"; \n')
 		file.write('};\n')
 
-
 		file.write('switch (_typeofUnit) do \n{\n')
+		
 		#add backpack setup here for each faction
 
 		for row in cur.execute("SELECT * FROM units"):
@@ -206,21 +209,28 @@ def GenerateGearScript(cur):
 			file.write('case "' + unit_name + '": {\n')
 
 			#add main weapon + ammo
-			file.write('_unit addmagazines [' + main_ammo + ',4];\n')
-			file.write('_unit addweapon ' + main_weapon + ';\n')
+			file.write('_unit addmagazines ["' + main_ammo + '",4];\n')
+			file.write('_unit addweapon "' + main_weapon + '";\n')
 
 			#add secondary weapon + ammo
-			#file.write('_unit addmagazines [' + secondary_ammo + ',2];\n')
-			file.write('_unit addweapon ' + secondary_weapon + ';\n')
+			file.write('_unit addmagazines ["' + secondary_ammo + '",2];\n')
+			file.write('_unit addweapon "' + secondary_weapon + '";\n')
 
 			#add main weapon + ammo
-			file.write('_unit addmagazines [' + sidearm_ammo + ',5];\n')
-			file.write('_unit addweapon ' + sidearm_weapon + ';\n')
+			file.write('_unit addmagazines ["' + sidearm_ammo + '",5];\n')
+			file.write('_unit addweapon "' + sidearm_weapon + '";\n')
 
-			#adding one last set of 6 mags for main gun just incase 
-			file.write('_unit addmagazines [' + main_ammo + ',6];\n')
+			#add other items 
+			file.write('_unit addmagazines ["HandGrenade",2];\n')
+			file.write('_unit addmagazines ["ACE_M84",2];\n')
+			file.write('_unit addmagazines ["SmokeShell",4];\n')
+			file.write('_unit addmagazines ["FirstAidKit",4];\n')
+
+			#adding one last set of 6 mags for main gun just incase 4 isn't enough
+			file.write('_unit addmagazines ["' + main_ammo + '",6];\n')
 			file.write('};\n\n')
 
+		file.write('};\n')
 
 if __name__ == "__main__":
 	start()
