@@ -242,7 +242,6 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 		file.write('};\n\n')
 
 		#backpack setup for each faction
-		file.write('switch (_typeofUnit) do \n{\n')
 		file.write('_backpack = {\n_typeofBackPack = _this select 0;\n_loadout = f_param_backpacks;\nif (count _this > 1) then {_loadout = _this select 1};\nswitch (_typeofBackPack) do\n{\n')
 		if(unitSide == "aaf"):
 			file.write('#include "f_assignGear_aaf_b.sqf";\n')
@@ -255,6 +254,8 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 		else:
 			file.write('#include "f_assignGear_nato_b.sqf";\n')
 		file.write('};\n};\n\n')
+
+		file.write('switch (_typeofUnit) do \n{\n')
 
 		for row in cur.execute("SELECT * FROM units"):
 			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
