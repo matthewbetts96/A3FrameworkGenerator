@@ -121,7 +121,7 @@ def submitWeapons(cur,sql,e1,e2,e3,e4,e5,e6,e7,e8):
     unit_side = e8.get()
     cur.execute('INSERT INTO units(main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side) VALUES (?,?,?,?,?,?,?,?)',(str(main_weapon),str(main_ammo),str(secondary_weapon),str(secondary_ammo),str(sidearm_weapon),str(sidearm_ammo),str(unit_name),str(unit_side)))
     sql.commit()
-    messagebox.showinfo("Notice", "Weapons Inserted Successfully!")
+    #messagebox.showinfo("Notice", "Weapons Inserted Successfully!")
 
 def submitGear(e9,e10,e11,e12,e13):
 	print()
@@ -138,13 +138,13 @@ def clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11):
 	e9.delete(0, END)
 	e10.delete(0, END)
 	e11.delete(0, END)
-	messagebox.showinfo("Notice", "Cleared Boxes.")
+	#messagebox.showinfo("Notice", "Cleared Boxes.")
 
 def gearScriptSetUp(cur):
 	gearScriptWindow = tk.Tk()
 	gearScriptWindow.title("Framework Generator")
 
-	label1 = Label(gearScriptWindow, text = "Side (blu/red/ind/civ)")
+	label1 = Label(gearScriptWindow, text = "Side (blu/red etc)")
 	label1.grid(row=0, sticky=W)
 	f1 = tk.Entry(gearScriptWindow)
 	f1.grid(row=0, column=1)
@@ -169,15 +169,21 @@ def gearScriptSetUp(cur):
 
 	#Compass
 	label5 = Label(gearScriptWindow, text = "Compass? (y/n)")
+	label5.grid(row=4, sticky=W)
 	f5 = tk.Entry(gearScriptWindow)
+	f5.grid(row=4, column=1)
 
 	#Watch? (y/n)
 	label6 = Label(gearScriptWindow, text = "Watch? (y/n)")
+	label6.grid(row=5, sticky=W)
 	f6 = tk.Entry(gearScriptWindow)
+	f6.grid(row=5, column=1)
 
 	#GPS? (y/n)
 	label7 = Label(gearScriptWindow, text = "GPS? (y/n)")
+	label7.grid(row=6, sticky=W)
 	f7 = tk.Entry(gearScriptWindow)
+	f7.grid(row=6, column=1)
 
 	generateGearScript = tk.Button(gearScriptWindow,text="Generate Gear Script",command=lambda: GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7))
 	generateGearScript.grid(row=10, column=1, sticky=W)
@@ -193,6 +199,26 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 	includeGPS = f7.get()
 
 	with open('gearScript.sqf', 'w') as file:
+
+		#TFR radio backpack
+		file.write('if(f_var_radios == 2) then {\n')
+		file.write('_bagradio =')
+
+		#if they aren't red/csat/aaf or ind give them a blufor radio
+		if(unitSide == "aaf"):
+			file.write('TF_defaultGuerBackpack;\n')
+		elif(unitSide == "ind"):
+			file.write('TF_defaultGuerBackpack;\n')
+		elif(unitSide == "csat"):
+			file.write('TF_defaultEastBackpack;\n')
+		elif(unitSide == "red"):
+			file.write('TF_defaultEastBackpack;\n')
+		else:
+			file.write('TF_defaultWestBackpack;\n')
+
+		file.write('f_radios_settings_tfr_backpackRadios = ["co","dc"];\n')
+		file.write('if(_typeOfUnit in f_radios_settings_tfr_backpackRadios) then {\n_bagsmall = _bagradio;\n_bagmedium = _bagradio;\n_baglarge = _bagradio;\n};\n};\n\n')
+
 		file.write('_typeofUnit = toLower (_this select 0);\n')
 		file.write('_unit = _this select 1;	\n')
 		file.write('_isMan = _unit isKindOf "CAManBase";\n\n')
@@ -215,11 +241,21 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 			file.write('_unit linkItem "ItemGPS"; \n')
 		file.write('};\n\n')
 
+		#backpack setup for each faction
 		file.write('switch (_typeofUnit) do \n{\n')
-		
-		#add backpack setup here for each faction
+		file.write('_backpack = {\n_typeofBackPack = _this select 0;\n_loadout = f_param_backpacks;\nif (count _this > 1) then {_loadout = _this select 1};\nswitch (_typeofBackPack) do\n{\n')
+		if(unitSide == "aaf"):
+			file.write('#include "f_assignGear_aaf_b.sqf";\n')
+		elif(unitSide == "fia"):
+			file.write('#include "f_assignGear_fia_b.sqf";\n')
+		elif(unitSide == "csat"):
+			file.write('#include "f_assignGear_csat_b.sqf";\n')
+		elif(unitSide == "red"):
+			file.write('#include "f_assignGear_csat_b.sqf";\n')
+		else:
+			file.write('#include "f_assignGear_nato_b.sqf";\n')
+		file.write('};\n};\n\n')
 
-		#WHERE (unit_side = unitSide)
 		for row in cur.execute("SELECT * FROM units"):
 			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
 			if(unit_side == unitSide):	
@@ -233,7 +269,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 				file.write('_unit addmagazines ["' + secondary_ammo + '",2];\n')
 				file.write('_unit addweapon "' + secondary_weapon + '";\n')
 
-				#add main weapon + ammo
+				#add sidearm + ammo
 				file.write('_unit addmagazines ["' + sidearm_ammo + '",5];\n')
 				file.write('_unit addweapon "' + sidearm_weapon + '";\n')
 
@@ -245,7 +281,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 
 				#adding one last set of 6 mags for main gun just incase 4 isn't enough
 				file.write('_unit addmagazines ["' + main_ammo + '",6];\n')
-				file.write('[' + unit_name +'] call _backpack;')
+				file.write('["' + unit_name +'"] call _backpack;')
 				file.write('};\n\n')
 		
 		#end closing bracket
