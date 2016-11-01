@@ -149,35 +149,48 @@ def gearScriptSetUp(cur):
 	f1 = tk.Entry(gearScriptWindow)
 	f1.grid(row=0, column=1)
 
-	#Main Weapon Ammo
+	#Map? (y/n)
 	label2 = Label(gearScriptWindow, text = "Map? (y/n)")
 	label2.grid(row=1, sticky=W)
 	f2 = tk.Entry(gearScriptWindow)
 	f2.grid(row=1, column=1)
 
-	#Secondary Weapon
+	#NVG's? (y/n)
 	label3 = Label(gearScriptWindow, text = "NVG's? (y/n)")
 	label3.grid(row=2, sticky=W)
 	f3 = tk.Entry(gearScriptWindow)
 	f3.grid(row=2, column=1)
 
-	#Secondary Weapon Ammo
+	#Radio? (y/n)
 	label4 = Label(gearScriptWindow, text = "Radio? (y/n)")
 	label4.grid(row=3, sticky=W)
 	f4 = tk.Entry(gearScriptWindow)
 	f4.grid(row=3, column=1)
 
-	generateGearScript = tk.Button(gearScriptWindow,text="Generate Gear Script",command=lambda: GenerateGearScript(cur,f1,f2,f3,f4))
+	#Compass
+	label5 = Label(gearScriptWindow, text = "Compass? (y/n)")
+	f5 = tk.Entry(gearScriptWindow)
+
+	#Watch? (y/n)
+	label6 = Label(gearScriptWindow, text = "Watch? (y/n)")
+	f6 = tk.Entry(gearScriptWindow)
+
+	#GPS? (y/n)
+	label7 = Label(gearScriptWindow, text = "GPS? (y/n)")
+	f7 = tk.Entry(gearScriptWindow)
+
+	generateGearScript = tk.Button(gearScriptWindow,text="Generate Gear Script",command=lambda: GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7))
 	generateGearScript.grid(row=10, column=1, sticky=W)
 
 
-def GenerateGearScript(cur,f1,f2,f3,f4):
+def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 	unitSide = f1.get()
 	includeMap = f2.get()
 	includeNVG = f3.get()
 	includeRadio = f4.get()
-
-	print(unitSide)
+	includeCompass = f5.get()
+	includeWatch = f6.get()
+	includeGPS = f7.get()
 
 	with open('gearScript.sqf', 'w') as file:
 		file.write('_typeofUnit = toLower (_this select 0);\n')
@@ -190,22 +203,21 @@ def GenerateGearScript(cur,f1,f2,f3,f4):
 		
 		if(includeMap == "y"):
 			file.write('_unit linkItem "ItemMap";\n')
-
 		if(includeNVG == "y"):
 			file.write('_unit linkItem "";\n')
-
 		if(includeRadio == "y"):
 			file.write('_unit linkItem "ItemRadio";\n')
-
-		file.write('_unit linkItem "ItemCompass";\n')
-		file.write('_unit linkItem "ItemWatch";\n')
-		file.write('_unit linkItem "ItemGPS"; \n')
+		if(includeCompass == "y"):
+			file.write('_unit linkItem "ItemCompass";\n')
+		if(includeWatch == "y"):
+			file.write('_unit linkItem "ItemWatch";\n')
+		if(includeGPS == "y"):
+			file.write('_unit linkItem "ItemGPS"; \n')
 		file.write('};\n\n')
 
 		file.write('switch (_typeofUnit) do \n{\n')
 		
 		#add backpack setup here for each faction
-
 
 		#WHERE (unit_side = unitSide)
 		for row in cur.execute("SELECT * FROM units"):
@@ -233,6 +245,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4):
 
 				#adding one last set of 6 mags for main gun just incase 4 isn't enough
 				file.write('_unit addmagazines ["' + main_ammo + '",6];\n')
+				file.write('[' + unit_name +'] call _backpack;')
 				file.write('};\n\n')
 		
 		#end closing bracket
