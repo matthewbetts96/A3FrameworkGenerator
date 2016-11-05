@@ -230,6 +230,10 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
     includeCompass = f5.get()
     includeWatch = f6.get()
     includeGPS = f7.get()
+    varA = 0
+    varB = 0
+    varC = 0
+    varD = 0
  
     with open('gearScript.sqf', 'w') as file:
  
@@ -253,38 +257,61 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         file.write('if(_typeOfUnit in f_radios_settings_tfr_backpackRadios) then {\n_bagsmall = _bagradio;\n_bagmedium = _bagradio;\n_baglarge = _bagradio;\n};\n};\n\n')
        
         #clothes assignments
-        file.write('_baseUniform = ["')
+        #Uniforms
+        file.write('_baseUniform = [')
         for row in cur.execute("SELECT * FROM uniforms"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
-                file.write(str(insertValue))
-                file.write('","')
+                if(varA == 0):
+                    varA = varA + 1 
+                    file.write('"')
+                    file.write(str(insertValue))
+                else:
+                    file.write('","')
+                    file.write(str(insertValue))
         file.write('"];\n\n')  
        
-        file.write('_mediumRig = ["')
+       	#Vests
+        file.write('_mediumRig = [')
         for row in cur.execute("SELECT * FROM vests"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
-                file.write(str(insertValue))
-                file.write('","')
-        file.write('"];\n\n')
+                if(varB == 0):
+                    varB = varB + 1 
+                    file.write('"')
+                    file.write(str(insertValue))
+                else:
+                    file.write('","')
+                    file.write(str(insertValue))
+        file.write('"];\n\n')  
        
-        file.write('_baseHelmet = ["')
+        #Helmets
+        file.write('_baseHelmet = [')
         for row in cur.execute("SELECT * FROM helmets"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
-           
-                file.write(str(insertValue))
-                file.write('","')
-        file.write('"];\n\n')
+                if(varC == 0):
+                    varC = varC + 1 
+                    file.write('"')
+                    file.write(str(insertValue))
+                else:
+                    file.write('","')
+                    file.write(str(insertValue))
+        file.write('"];\n\n')  
        
-        file.write('_baseGlasses = ["')
+        #Glasses
+        file.write('_baseGlasses = [')
         for row in cur.execute("SELECT * FROM glasses"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
-                file.write(str(insertValue))
-                file.write('","')
-        file.write('"];\n\n')
+                if(varD == 0):
+                    varD = varD + 1 
+                    file.write('"')
+                    file.write(str(insertValue))
+                else:
+                    file.write('","')
+                    file.write(str(insertValue))
+        file.write('"];\n\n')  
        
         #backpacks need to go here
        
@@ -356,6 +383,8 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
        
         #end closing bracket
         file.write('};\n')
+        file.close()
+
  
 if __name__ == "__main__":
     start()
