@@ -262,6 +262,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         for row in cur.execute("SELECT * FROM uniforms"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
+            	#will only trigger for first value
                 if(varA == 0):
                     varA = varA + 1 
                     file.write('"')
@@ -276,6 +277,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         for row in cur.execute("SELECT * FROM vests"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
+            	#will only trigger for first value
                 if(varB == 0):
                     varB = varB + 1 
                     file.write('"')
@@ -290,6 +292,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         for row in cur.execute("SELECT * FROM helmets"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
+            	#will only trigger for first value
                 if(varC == 0):
                     varC = varC + 1 
                     file.write('"')
@@ -304,6 +307,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         for row in cur.execute("SELECT * FROM glasses"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
+            	#will only trigger for first value
                 if(varD == 0):
                     varD = varD + 1 
                     file.write('"')
@@ -380,7 +384,11 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
                 file.write('_unit addmagazines ["' + main_ammo + '",6];\n')
                 file.write('["' + unit_name +'"] call _backpack;')
                 file.write('};\n\n')
-       
+
+       	#default
+       	file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
+       	file.write('if (true) exitwith {player globalchat format ["DEBUG: Unit = %1. Gear template %2 does not exist, used Rifleman instead.",_unit,_typeofunit]};\n')
+       	file.write('};\n')
         #end closing bracket
         file.write('};\n')
         file.close()
