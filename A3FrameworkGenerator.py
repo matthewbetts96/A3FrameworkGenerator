@@ -234,6 +234,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
     varB = 0
     varC = 0
     varD = 0
+    varE = 0
  
     with open('gearScript.sqf', 'w') as file:
  
@@ -316,8 +317,21 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
                     file.write('","')
                     file.write(str(insertValue))
         file.write('"];\n\n')  
-       
-        #backpacks need to go here
+        
+        #Backpacks
+        file.write('_backpacks = [')
+        for row in cur.execute("SELECT * FROM backpacks"):
+            insertValue, gearSide = (row)
+            if(gearSide == unitSide):
+            	#will only trigger for first value
+                if(varE == 0):
+                    varE = varD + 1 
+                    file.write('"')
+                    file.write(str(insertValue))
+                else:
+                    file.write('","')
+                    file.write(str(insertValue))
+        file.write('"];\n\n') 
        
         file.write('_typesofUnit = toLower (_this select 0);\n')
         file.write('_unit = _this select 1; \n')
@@ -351,10 +365,12 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
             file.write('#include "f_assignGear_csat_b.sqf";\n')
         elif(unitSide == "red"):
             file.write('#include "f_assignGear_csat_b.sqf";\n')
+        elif(unitSide == "blu"):
+            file.write('#include "f_assignGear_blu_b.sqf";\n')
         else:
-            file.write('#include "f_assignGear_nato_b.sqf";\n')
+            file.write('#include "f_assignGear_OTHER_b.sqf";\n')
         file.write('};\n};\n\n')
- 
+
         file.write('switch (_typeofUnit) do \n{\n')
  
         for row in cur.execute("SELECT * FROM units"):
@@ -379,9 +395,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
                 file.write('_unit addmagazines ["ACE_M84",2];\n')
                 file.write('_unit addmagazines ["SmokeShell",4];\n')
                 file.write('_unit addmagazines ["FirstAidKit",4];\n')
- 
-                #adding one last set of 6 mags for main gun just incase 4 isn't enough
-                file.write('_unit addmagazines ["' + main_ammo + '",6];\n')
+
                 file.write('["' + unit_name +'"] call _backpack;')
                 file.write('};\n\n')
 
@@ -392,7 +406,19 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         #end closing bracket
         file.write('};\n')
         file.close()
+        GenerateBackpackScript(cur,unitSide)
 
+def GenerateBackpackScript(cur,unitSide):
+	with open('gearScript_b.sqf', 'w') as file:  
+		for row in cur.execute("SELECT * FROM units"):
+			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
+			if(unit_side == unitSide): 
+				file.write('case "' + unit_name + '": {\n')
+				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1)]\n')
+				file.write('clearMagazineCargoGlobal (unitBackpack _unit);\n')
+				file.write('(unitBackpack _unit) addItemCargoGlobal ["HandGrenade",2];\n(unitBackpack _unit) addMagazineCargoGlobal ["SmokeShell", 2];\n(unitBackpack _unit) addItemCargoGlobal ["FirstAidKit", 4];\n')
+				file.write('(unitBackpack _unit) addMagazineCargoGlobal [' + main_ammo + ', 6];')
+				file.write('};')
  
 if __name__ == "__main__":
     start()
