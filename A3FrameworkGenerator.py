@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
- 
+import os
+
+#Start function
 def start():
     print("Starting up Database")
     sql = sqlite3.connect('unit_database.db')
@@ -15,8 +17,10 @@ def start():
     cur.execute('CREATE TABLE IF NOT EXISTS helmets (helmet varchar NOT NULL,gearSide varchar NOT NULL)')
     cur.execute('CREATE TABLE IF NOT EXISTS glasses (glasses varchar NOT NULL, gearSide varchar NOT NULL)')
     sql.commit()
+    clearFiles()
     generateGUI(cur,sql)
- 
+
+#Generates the UI
 def generateGUI(cur,sql):
     root = tk.Tk()
     root.title("Framework Generator")
@@ -120,7 +124,7 @@ def generateGUI(cur,sql):
  
     root.mainloop()
  
- 
+#Collects the weapon and stores in db for later use
 def submitWeapons(cur,sql,e1,e2,e3,e4,e5,e6,e7,e8):
     main_weapon = e1.get()
     main_ammo = e2.get()
@@ -134,6 +138,7 @@ def submitWeapons(cur,sql,e1,e2,e3,e4,e5,e6,e7,e8):
     sql.commit()
     #messagebox.showinfo("Notice", "Weapons Inserted Successfully!")
  
+#Collects all the clothes gear and stores them in the db for later use
 def submitGear(e9,e10,e11,e12,e13,e14,cur,sql):
     m_uniform = e9.get()
     m_vests = e10.get()
@@ -157,8 +162,7 @@ def submitGear(e9,e10,e11,e12,e13,e14,cur,sql):
         cur.execute('INSERT INTO glasses(glasses,gearSide) VALUES (?,?)', (str(m_glasses),str(gearSide)))
         sql.commit()
    
-   
-   
+ 
 def clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11):
     e1.delete(0, END)
     e2.delete(0, END)
@@ -259,14 +263,13 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
        
         #clothes assignments
         #Uniforms
-        file.write('_baseUniform = [')
+        file.write('_baseUniform = ["')
         for row in cur.execute("SELECT * FROM uniforms"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
             	#will only trigger for first value
                 if(varA == 0):
                     varA = varA + 1 
-                    file.write('"')
                     file.write(str(insertValue))
                 else:
                     file.write('","')
@@ -274,14 +277,13 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         file.write('"];\n\n')  
        
        	#Vests
-        file.write('_mediumRig = [')
+        file.write('_mediumRig = ["')
         for row in cur.execute("SELECT * FROM vests"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
             	#will only trigger for first value
                 if(varB == 0):
                     varB = varB + 1 
-                    file.write('"')
                     file.write(str(insertValue))
                 else:
                     file.write('","')
@@ -289,14 +291,13 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         file.write('"];\n\n')  
        
         #Helmets
-        file.write('_baseHelmet = [')
+        file.write('_baseHelmet = ["')
         for row in cur.execute("SELECT * FROM helmets"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
             	#will only trigger for first value
                 if(varC == 0):
                     varC = varC + 1 
-                    file.write('"')
                     file.write(str(insertValue))
                 else:
                     file.write('","')
@@ -304,14 +305,13 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         file.write('"];\n\n')  
        
         #Glasses
-        file.write('_baseGlasses = [')
+        file.write('_baseGlasses = ["')
         for row in cur.execute("SELECT * FROM glasses"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
             	#will only trigger for first value
                 if(varD == 0):
                     varD = varD + 1 
-                    file.write('"')
                     file.write(str(insertValue))
                 else:
                     file.write('","')
@@ -319,14 +319,13 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         file.write('"];\n\n')  
         
         #Backpacks
-        file.write('_backpacks = [')
+        file.write('_backpacks = ["')
         for row in cur.execute("SELECT * FROM backpacks"):
             insertValue, gearSide = (row)
             if(gearSide == unitSide):
             	#will only trigger for first value
                 if(varE == 0):
                     varE = varD + 1 
-                    file.write('"')
                     file.write(str(insertValue))
                 else:
                     file.write('","')
@@ -368,14 +367,21 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         elif(unitSide == "blu"):
             file.write('#include "f_assignGear_blu_b.sqf";\n')
         else:
-            file.write('#include "f_assignGear_OTHER_b.sqf";\n')
+            file.write('#include "f_assignGear_default_b.sqf";\n')
         file.write('};\n};\n\n')
 
         file.write('switch (_typeofUnit) do \n{\n')
- 
+        
+        #need to define it before use
+        actualUnitSide = "default"
+
+        #Build switch statements for unit weapons
         for row in cur.execute("SELECT * FROM units"):
             main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
             if(unit_side == unitSide): 
+
+                #Fix for when it was overriding unitside on the last pass
+                actualUnitSide = unitSide
                 file.write('case "' + unit_name + '": {\n')
  
                 #add main weapon + ammo
@@ -406,19 +412,41 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
         #end closing bracket
         file.write('};\n')
         file.close()
-        GenerateBackpackScript(cur,unitSide)
+        GenerateBackpackScript(cur,actualUnitSide)
 
-def GenerateBackpackScript(cur,unitSide):
+#Generates Backpack sqf file
+def GenerateBackpackScript(cur,actualUnitSide):
 	with open('gearScript_b.sqf', 'w') as file:  
 		for row in cur.execute("SELECT * FROM units"):
 			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
-			if(unit_side == unitSide): 
+			if(unit_side == actualUnitSide): 
 				file.write('case "' + unit_name + '": {\n')
 				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1)]\n')
 				file.write('clearMagazineCargoGlobal (unitBackpack _unit);\n')
 				file.write('(unitBackpack _unit) addItemCargoGlobal ["HandGrenade",2];\n(unitBackpack _unit) addMagazineCargoGlobal ["SmokeShell", 2];\n(unitBackpack _unit) addItemCargoGlobal ["FirstAidKit", 4];\n')
 				file.write('(unitBackpack _unit) addMagazineCargoGlobal [' + main_ammo + ', 6];')
 				file.write('};')
- 
+	file.close()			
+	renameFiles(actualUnitSide)
+
+#remanmes files dependant on the side
+def renameFiles(actualUnitSide):
+	print(actualUnitSide)
+	os.rename('gearScript.sqf','f_assignGear_' + actualUnitSide +'.sqf')
+	os.rename('gearScript_b.sqf','f_assignGear_' + actualUnitSide +'_b.sqf')
+
+#Removes default files
+def clearFiles():
+	print("Removing old files...")
+	try:
+		os.remove('gearScript.sqf')
+	except OSError:
+		pass
+
+	try:
+		os.remove('gearScript_b.sqf')
+	except OSError:
+		pass
+
 if __name__ == "__main__":
     start()
