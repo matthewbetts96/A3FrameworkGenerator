@@ -62,31 +62,31 @@ def generateGUI(cur,sql):
     e6.grid(row=5, column=1)
  
     #Unit name
-    label7 = Label(root, text = "Unit name (r,ar,etc)")
+    label7 = Label(root, text = "Unit name (r/ar etc)")
     label7.grid(row=6, sticky=W)
     e7 = tk.Entry(root)
     e7.grid(row=6, column=1)
  
     #Unit side
-    label8 = Label(root, text = "Unit side (blu/red/ind/civ)")
+    label8 = Label(root, text = "Unit side (blu/red etc)")
     label8.grid(row=7, sticky=W)
     e8 = tk.Entry(root)
     e8.grid(row=7, column=1)
  
     #Uniform
-    label9 = Label(root, text = "Uniform(s)")
+    label9 = Label(root, text = "Uniform")
     label9.grid(row=0, column=3, sticky=W)
     e9 = tk.Entry(root)
     e9.grid(row=0, column=4)
  
     #Vest
-    label10 = Label(root, text = "Vest(s)")
+    label10 = Label(root, text = "Vest")
     label10.grid(row=1, column=3, sticky=W)
     e10 = tk.Entry(root)
     e10.grid(row=1, column=4)
  
     #Backpacks
-    label11 = Label(root, text = "Backpack(s)")
+    label11 = Label(root, text = "Backpack")
     label11.grid(row=2, column=3, sticky=W)
     e11 = tk.Entry(root)
     e11.grid(row=2, column=4)
@@ -135,10 +135,12 @@ def submitWeapons(cur,sql,e1,e2,e3,e4,e5,e6,e7,e8):
     unit_name = e7.get()
     unit_side = e8.get()
     cur.execute('INSERT INTO units(main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side) VALUES (?,?,?,?,?,?,?,?)',(str(main_weapon),str(main_ammo),str(secondary_weapon),str(secondary_ammo),str(sidearm_weapon),str(sidearm_ammo),str(unit_name),str(unit_side)))
+    print('Inserted unit ' + unit_name + ' on ' + unit_side + ' side.')
     sql.commit()
     #messagebox.showinfo("Notice", "Weapons Inserted Successfully!")
  
 #Collects all the clothes gear and stores them in the db for later use
+#Due to not all fields being entered at once it only executes when entry box is not empty
 def submitGear(e9,e10,e11,e12,e13,e14,cur,sql):
     m_uniform = e9.get()
     m_vests = e10.get()
@@ -234,6 +236,8 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
     includeCompass = f5.get()
     includeWatch = f6.get()
     includeGPS = f7.get()
+
+    #initialises/resets values 
     varA = 0
     varB = 0
     varC = 0
@@ -356,18 +360,7 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
  
         #backpack setup for each faction
         file.write('_backpack = {\n_typeofBackPack = _this select 0;\n_loadout = f_param_backpacks;\nif (count _this > 1) then {_loadout = _this select 1};\nswitch (_typeofBackPack) do\n{\n')
-        if(unitSide == "aaf"):
-            file.write('#include "f_assignGear_aaf_b.sqf";\n')
-        elif(unitSide == "fia"):
-            file.write('#include "f_assignGear_fia_b.sqf";\n')
-        elif(unitSide == "csat"):
-            file.write('#include "f_assignGear_csat_b.sqf";\n')
-        elif(unitSide == "red"):
-            file.write('#include "f_assignGear_csat_b.sqf";\n')
-        elif(unitSide == "blu"):
-            file.write('#include "f_assignGear_blu_b.sqf";\n')
-        else:
-            file.write('#include "f_assignGear_default_b.sqf";\n')
+        file.write('#include "f_assignGear_' + unitSide +'_b.sqf";\n')
         file.write('};\n};\n\n')
 
         file.write('switch (_typeofUnit) do \n{\n')
@@ -404,12 +397,14 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
 
                 file.write('["' + unit_name +'"] call _backpack;')
                 file.write('};\n\n')
-
-       	#default
-       	file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
-       	file.write('if (true) exitwith {player globalchat format ["DEBUG: Unit = %1. Gear template %2 does not exist, used Rifleman instead.",_unit,_typeofunit]};\n')
-       	file.write('};\n')
+                print('Created unit ' + unit_name + ' on ' + actualUnitSide + ' side.')
         #end closing bracket
+        file.write('};\n')
+       
+        #default
+        file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
+        file.write('if (true) exitwith {player globalchat format ["DEBUG: Unit = %1. Gear template %2 does not exist, used Rifleman instead.",_unit,_typeofunit]};\n')
+        
         file.write('};\n')
         file.close()
         GenerateBackpackScript(cur,actualUnitSide)
@@ -421,7 +416,7 @@ def GenerateBackpackScript(cur,actualUnitSide):
 			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
 			if(unit_side == actualUnitSide): 
 				file.write('case "' + unit_name + '": {\n')
-				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1)]\n')
+				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1]\n')
 				file.write('clearMagazineCargoGlobal (unitBackpack _unit);\n')
 				file.write('(unitBackpack _unit) addItemCargoGlobal ["HandGrenade",2];\n(unitBackpack _unit) addMagazineCargoGlobal ["SmokeShell", 2];\n(unitBackpack _unit) addItemCargoGlobal ["FirstAidKit", 4];\n')
 				file.write('(unitBackpack _unit) addMagazineCargoGlobal [' + main_ammo + ', 6];')
@@ -431,7 +426,6 @@ def GenerateBackpackScript(cur,actualUnitSide):
 
 #remanmes files dependant on the side
 def renameFiles(actualUnitSide):
-	print(actualUnitSide)
 	os.rename('gearScript.sqf','f_assignGear_' + actualUnitSide +'.sqf')
 	os.rename('gearScript_b.sqf','f_assignGear_' + actualUnitSide +'_b.sqf')
 
@@ -439,12 +433,12 @@ def renameFiles(actualUnitSide):
 def clearFiles():
 	print("Removing old files...")
 	try:
-		os.remove('gearScript.sqf')
+		os.remove('default.sqf')
 	except OSError:
 		pass
 
 	try:
-		os.remove('gearScript_b.sqf')
+		os.remove('default_b.sqf')
 	except OSError:
 		pass
 
