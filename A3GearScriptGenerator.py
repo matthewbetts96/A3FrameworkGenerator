@@ -421,13 +421,39 @@ def GenerateBackpackScript(cur,actualUnitSide):
 				file.write('(unitBackpack _unit) addItemCargoGlobal ["HandGrenade",2];\n(unitBackpack _unit) addMagazineCargoGlobal ["SmokeShell", 2];\n(unitBackpack _unit) addItemCargoGlobal ["FirstAidKit", 4];\n')
 				file.write('(unitBackpack _unit) addMagazineCargoGlobal [' + main_ammo + ', 6];')
 				file.write('};')
-	file.close()			
+	file.close()
+	generateFn_AssignGear(cur)
 	renameFiles(actualUnitSide)
 
 #remanmes files dependant on the side
 def renameFiles(actualUnitSide):
 	os.rename('gearScript.sqf','f_assignGear_' + actualUnitSide +'.sqf')
 	os.rename('gearScript_b.sqf','f_assignGear_' + actualUnitSide +'_b.sqf')
+
+
+def generateFn_AssignGear(cur):
+    #Creates
+    createdSides = []
+
+    with open('fn_assignGear.sqf', 'w') as file:
+        file.write('private ["_faction","_typeofUnit","_unit"];\n\n')
+        file.write('_typeofUnit = toLower (_this select 0);\n_unit = _this select 1;\n\n')
+        file.write('_faction = toLower (faction _unit);\nif(count _this > 2) then\n{\n_faction = toLower (_this select 2);\n};')
+
+        #Insignia setup 
+        #WARNING -not even sure if this works, no guarantees 
+        file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
+
+        file.write('if !(local _unit) exitWith {};\n')
+        file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
+        file.write('private ["_attach1","_attach2","_silencer1","_silencer2","_scope1","_scope2","_scope3","_bipod1","_bipod2","_attachments","_silencer","_hg_silencer1","_hg_scope1","_hg_attachments",')
+        file.write('"_typeofUnit","_unit","_isMan","_backpack","_typeofBackPack","_loadout","_typeofunit"];\n')
+        for row in cur.execute("SELECT * FROM units"):
+            main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
+            file.write('if (_faction ==' + unit_side + '") then {\n')
+            file.write('#include "f_assignGear_' + unit_side + '.sqf"\n};\n')
+
+        file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
 
 #Removes default files
 def clearFiles():
