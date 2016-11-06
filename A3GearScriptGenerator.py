@@ -25,98 +25,94 @@ def generateGUI(cur,sql):
     root = tk.Tk()
     root.title("Framework Generator")
  
+
     #Main Weapon
     label1 = Label(root, text = "Main Weapon")
-    label1.grid(row=0, sticky=W)
+    label1.grid(row=1, column=1, sticky=W)
     e1 = tk.Entry(root)
-    e1.grid(row=0, column=1)
+    e1.grid(row=1, column=2)
  
     #Main Weapon Ammo
     label2 = Label(root, text = "Main Ammo")
-    label2.grid(row=1, sticky=W)
+    label2.grid(row=2, column=1, sticky=W)
     e2 = tk.Entry(root)
-    e2.grid(row=1, column=1)
+    e2.grid(row=2, column=2)
  
     #Secondary Weapon
     label3 = Label(root, text = "Secondary Weapon")
-    label3.grid(row=2, sticky=W)
+    label3.grid(row=3, column=1, sticky=W)
     e3 = tk.Entry(root)
-    e3.grid(row=2, column=1)
+    e3.grid(row=3, column=2)
  
     #Secondary Weapon Ammo
     label4 = Label(root, text = "Secondary Ammo")
-    label4.grid(row=3, sticky=W)
+    label4.grid(row=4, column=1, sticky=W)
     e4 = tk.Entry(root)
-    e4.grid(row=3, column=1)
+    e4.grid(row=4, column=2)
  
     #Sidearm Weapon
     label5 = Label(root, text = "Sidearm")
-    label5.grid(row=4, sticky=W)
+    label5.grid(row=5, column=1, sticky=W)
     e5 = tk.Entry(root)
-    e5.grid(row=4, column=1)
+    e5.grid(row=5, column=2)
  
     #Sidearm Ammo
     label6 = Label(root, text = "Sidearm Ammo")
-    label6.grid(row=5, sticky=W)
+    label6.grid(row=6, column=1, sticky=W)
     e6 = tk.Entry(root)
-    e6.grid(row=5, column=1)
+    e6.grid(row=6, column=2)
  
     #Unit name
     label7 = Label(root, text = "Unit name (r/ar etc)")
-    label7.grid(row=6, sticky=W)
+    label7.grid(row=7, column=1, sticky=W)
     e7 = tk.Entry(root)
-    e7.grid(row=6, column=1)
- 
+    e7.grid(row=7, column=2)
+
     #Unit side
-    label8 = Label(root, text = "Unit side (blu/red etc)")
-    label8.grid(row=7, sticky=W)
+    label8 = Label(root, text = "Unit side (MUST BE FILLED)")
+    label8.grid(row=0, sticky=W)
     e8 = tk.Entry(root)
-    e8.grid(row=7, column=1)
+    e8.grid(row=0, column=1)
  
     #Uniform
     label9 = Label(root, text = "Uniform")
-    label9.grid(row=0, column=3, sticky=W)
+    label9.grid(row=0, column=5, sticky=W)
     e9 = tk.Entry(root)
-    e9.grid(row=0, column=4)
+    e9.grid(row=0, column=6)
  
     #Vest
     label10 = Label(root, text = "Vest")
-    label10.grid(row=1, column=3, sticky=W)
+    label10.grid(row=1, column=5, sticky=W)
     e10 = tk.Entry(root)
-    e10.grid(row=1, column=4)
+    e10.grid(row=1, column=6)
  
     #Backpacks
     label11 = Label(root, text = "Backpack")
-    label11.grid(row=2, column=3, sticky=W)
+    label11.grid(row=2, column=5, sticky=W)
     e11 = tk.Entry(root)
-    e11.grid(row=2, column=4)
+    e11.grid(row=2, column=6)
  
     #HeadGear (Helmets)
     label12 = Label(root, text = "HeadGear (Helmets)") 
-    label12.grid(row=3, column=3, sticky=W)
+    label12.grid(row=3, column=5, sticky=W)
     e12 = tk.Entry(root)
-    e12.grid(row=3, column=4)
+    e12.grid(row=3, column=6)
  
     #HeadGear (Glasses)
     label13 = Label(root, text = "HeadGear (Glasses)") 
-    label13.grid(row=4, column=3, sticky=W)
+    label13.grid(row=4, column=5, sticky=W)
     e13 = tk.Entry(root)
-    e13.grid(row=4, column=4)
+    e13.grid(row=4, column=6)
    
-    #Gear Side
-    label14 = Label(root, text = "Side")   
-    label14.grid(row=5, column=3, sticky=W)
-    e14 = tk.Entry(root)
-    e14.grid(row=5, column=4)
  
  
-    submitButton = tk.Button(root,text="Submit Gear",command=lambda: submitGear(e9,e10,e11,e12,e13,e14,cur,sql))
-    submitButton.grid(row=6, column=4, sticky=W)
+    submitButton = tk.Button(root,text="Submit Gear",command=lambda: submitGear(e7,e9,e10,e11,e12,e13,cur,sql))
+    submitButton.grid(row=6, column=6, sticky=W)
  
     submitButton = tk.Button(root,text="Submit Weapons",command=lambda: submitWeapons(cur,sql,e1,e2,e3,e4,e5,e6,e7,e8))
     submitButton.grid(row=8, column=1, sticky=W)
  
-    clearAll = tk.Button(root,text="Clear All Boxes",command=lambda: clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11))
+    clearAll = tk.Button(root,text="Clear All Boxes",command=lambda: clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12,e13))
     clearAll.grid(row=9, column=1, sticky=W)
  
     generateGearScript = tk.Button(root,text="Generate Gear Script",command=lambda: gearScriptSetUp(cur))
@@ -141,13 +137,13 @@ def submitWeapons(cur,sql,e1,e2,e3,e4,e5,e6,e7,e8):
  
 #Collects all the clothes gear and stores them in the db for later use
 #Due to not all fields being entered at once it only executes when entry box is not empty
-def submitGear(e9,e10,e11,e12,e13,e14,cur,sql):
+def submitGear(e7,e9,e10,e11,e12,e13,cur,sql):
     m_uniform = e9.get()
     m_vests = e10.get()
     m_backpacks = e11.get()
     m_helmets = e12.get()
     m_glasses = e13.get()
-    gearSide = e14.get()
+    gearSide = e7.get()
     if(m_uniform != ""):
         cur.execute('INSERT INTO uniforms(uniform,gearSide) VALUES (?,?)', (str(m_uniform),str(gearSide)))
         sql.commit()
@@ -165,7 +161,7 @@ def submitGear(e9,e10,e11,e12,e13,e14,cur,sql):
         sql.commit()
    
  
-def clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11):
+def clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11,e12,e13):
     e1.delete(0, END)
     e2.delete(0, END)
     e3.delete(0, END)
@@ -177,6 +173,9 @@ def clearboxes(e1,e2,e3,e4,e5,e6,e7,e8,e9,e10,e11):
     e9.delete(0, END)
     e10.delete(0, END)
     e11.delete(0, END)
+    e12.delete(0, END)
+    e13.delete(0, END)
+    print("Cleared Boxes.")
     messagebox.showinfo("Notice", "Cleared Boxes.")
  
 def gearScriptSetUp(cur):
