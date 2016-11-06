@@ -398,13 +398,11 @@ def GenerateGearScript(cur,f1,f2,f3,f4,f5,f6,f7):
                 file.write('["' + unit_name +'"] call _backpack;')
                 file.write('};\n\n')
                 print('Created unit ' + unit_name + ' on ' + actualUnitSide + ' side.')
-        #end closing bracket
-        file.write('};\n')
        
         #default
         file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
-        file.write('if (true) exitwith {player globalchat format ["DEBUG: Unit = %1. Gear template %2 does not exist, used Rifleman instead.",_unit,_typeofunit]};\n')
-        
+        file.write('if (true) exitwith {player globalchat format ["DEBUG: Unit = %1. Gear template %2 does not exist, used Rifleman instead.",_unit,_typeofunit]};\n};\n')
+        #end closing bracket
         file.write('};\n')
         file.close()
         GenerateBackpackScript(cur,actualUnitSide)
@@ -415,8 +413,9 @@ def GenerateBackpackScript(cur,actualUnitSide):
 		for row in cur.execute("SELECT * FROM units"):
 			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
 			if(unit_side == actualUnitSide): 
+				file.write('m_backpack = (_backpacks call BIS_fnc_selectRandom);')
 				file.write('case "' + unit_name + '": {\n')
-				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1];\n')
+				file.write('_unit addBackpack m_backpack;\n')
 				file.write('clearMagazineCargoGlobal (unitBackpack _unit);\n')
 				file.write('(unitBackpack _unit) addItemCargoGlobal ["HandGrenade",2];\n(unitBackpack _unit) addMagazineCargoGlobal ["SmokeShell", 2];\n(unitBackpack _unit) addItemCargoGlobal ["FirstAidKit", 4];\n')
 				file.write('(unitBackpack _unit) addMagazineCargoGlobal ["' + main_ammo + '", 6];')
