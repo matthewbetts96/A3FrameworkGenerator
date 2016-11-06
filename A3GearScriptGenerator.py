@@ -416,10 +416,10 @@ def GenerateBackpackScript(cur,actualUnitSide):
 			main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
 			if(unit_side == actualUnitSide): 
 				file.write('case "' + unit_name + '": {\n')
-				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1]\n')
+				file.write('_unit addBackpack [(_backpacks call BIS_fnc_selectRandom), 1];\n')
 				file.write('clearMagazineCargoGlobal (unitBackpack _unit);\n')
 				file.write('(unitBackpack _unit) addItemCargoGlobal ["HandGrenade",2];\n(unitBackpack _unit) addMagazineCargoGlobal ["SmokeShell", 2];\n(unitBackpack _unit) addItemCargoGlobal ["FirstAidKit", 4];\n')
-				file.write('(unitBackpack _unit) addMagazineCargoGlobal [' + main_ammo + ', 6];')
+				file.write('(unitBackpack _unit) addMagazineCargoGlobal ["' + main_ammo + '", 6];')
 				file.write('};')
 	file.close()
 	generateFn_AssignGear(cur)
@@ -450,7 +450,7 @@ def generateFn_AssignGear(cur):
         file.write('"_typeofUnit","_unit","_isMan","_backpack","_typeofBackPack","_loadout","_typeofunit"];\n')
         for row in cur.execute("SELECT * FROM units"):
             main_weapon, main_ammo, secondary_weapon, secondary_ammo, sidearm_weapon, sidearm_ammo, unit_name, unit_side = (row)
-            file.write('if (_faction ==' + unit_side + '") then {\n')
+            file.write('if (_faction == "' + unit_side + '") then {\n')
             file.write('#include "f_assignGear_' + unit_side + '.sqf"\n};\n')
 
         file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
@@ -465,6 +465,16 @@ def clearFiles():
 
 	try:
 		os.remove('default_b.sqf')
+	except OSError:
+		pass
+	
+	try:
+		os.remove('gearScript.sqf')
+	except OSError:
+		pass
+
+	try:
+		os.remove('gearScript_b.sqf')
 	except OSError:
 		pass
 
