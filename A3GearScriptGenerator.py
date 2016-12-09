@@ -16,6 +16,7 @@ def main():
     cur.execute('CREATE TABLE IF NOT EXISTS helmets (helmet varchar NOT NULL,gearSide varchar NOT NULL)')
     cur.execute('CREATE TABLE IF NOT EXISTS glasses (glasses varchar NOT NULL, gearSide varchar NOT NULL)')
     sql.commit()
+    clearFiles()
     chooseSide(cur,sql)
     
 def chooseSide(cur,sql):
@@ -187,10 +188,12 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt):
     _unit_side = unit_side
     _unit_role = unitRoleEnt.get()
     _arsenal = textbox.get("1.0",'end-1c')
-    cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode) VALUES (?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal)))
-    sql.commit()
-
-
+    if(_unit_role != ""):
+        cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode) VALUES (?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal)))
+        sql.commit()
+    else:
+        messagebox.showinfo("Notice", "Unit Role is empty.")	
+		
 def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,cur,sql,enablePopups):
     _uniform = uniformEntry.get()
     _vests = vestEntry.get()
@@ -216,8 +219,8 @@ def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glasse
     if(_enablePopups == True):
         messagebox.showinfo("Notice", "Gear Inserted Successfully!")
 
-
 def generateGS(cur,sql,unit_side,unitAssociationToSideString):
+
     #initialises/resets values 
     #can't be in an __init__ due to needing to be run everytime a new set of sqf files is made
     _unit_side = unit_side
@@ -300,8 +303,6 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
         file.write('"];\n\n') 
         file.write('_typesofUnit = toLower (_this select 0);\n')
         file.write('_unit = _this select 1; \n')
-        file.write('_isMan = _unit isKindOf "CAManBase";\n\n')
-        file.write('if (_isMan) then {\n')
         file.write('removeBackpack _unit;\nremoveAllWeapons _unit;\nremoveAllItemsWithMagazines _unit;\nremoveAllAssignedItems _unit;\n')
 
         file.write('switch (_typeofUnit) do \n{\n')
@@ -309,9 +310,11 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
         for row in cur.execute("SELECT * FROM units"):
             faction, unitRole, arsenalPasteCode = (row)
             if(faction == _unit_side):
+			    actualUnitSide = faction
                 file.write('case "' + unitRole + '": {\n')
                 file.write(arsenalPasteCode)
                 print("Created unit: '" + unitRole + "' on '" + faction +"'")
+                file.write('};\n\n')
 
         #default
         file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
@@ -319,8 +322,67 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
         #end closing bracket
         file.write('};\n')
         file.close()
+        replaceThis()
+        renameFiles(actualUnitSide)
+        generateFn_AssignGear(cur)
 
+def generateFn_AssignGear(cur):
+    createdSides = []
+ 
+    with open('fn_assignGear.sqf', 'w') as file:
+        file.write('private ["_faction","_typeofUnit","_unit"];\n\n')
+        file.write('_typeofUnit = toLower (_this select 0);\n_unit = _this select 1;\n\n')
+        file.write('_faction = toLower (faction _unit);\nif(count _this > 2) then\n{\n_faction = toLower (_this select 2);\n};')
+ 
+        #Insignia setup 
+        #WARNING -not even sure if this works, no guarantees 
+        file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
+ 
+        file.write('if !(local _unit) exitWith {};\n')
+        file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
+        for row in cur.execute("SELECT * FROM units"):
+            faction, unitRole, arsenalPasteCode = (row)
+            file.write('if (_faction == "' + faction + '") then {\n')
+            file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
+        file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
+		
+def replaceThis():
+    f = open('gearScript.sqf','r')
+    filedata = f.read()
+    f.close()
+    newdata = filedata.replace("this","_unit")
+    f = open('gearScript.sqf','w')
+    f.write(newdata)
+    f.close()
 
+def renameFiles(actualUnitSide):
+    try: 
+        os.rename('gearScript.sqf','f_assignGear_' + actualUnitSide +'.sqf')
+    except Exception as e:
+       print("An error occured in the file re-naming. Files probably already exist.")
+
+def clearFiles():
+ 	print("Removing old files...")
+ 	try:
+ 		os.remove('default.sqf')
+ 	except OSError:
+ 		pass
+ 
+ 	try:
+ 		os.remove('default_b.sqf')
+ 	except OSError:
+ 		pass
+ 	
+ 	try:
+ 		os.remove('gearScript.sqf')
+ 	except OSError:
+ 		pass
+ 
+ 	try:
+ 		os.remove('gearScript_b.sqf')
+ 	except OSError:
+ 		pass
+ 
 def clearVests(uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,enablePopups):
     uniformEntry.delete(0, END)
     vestEntry.delete(0, END)
