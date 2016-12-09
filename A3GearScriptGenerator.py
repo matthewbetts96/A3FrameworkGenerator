@@ -310,7 +310,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
         for row in cur.execute("SELECT * FROM units"):
             faction, unitRole, arsenalPasteCode = (row)
             if(faction == _unit_side):
-			    actualUnitSide = faction
+                actualUnitSide = faction
                 file.write('case "' + unitRole + '": {\n')
                 file.write(arsenalPasteCode)
                 print("Created unit: '" + unitRole + "' on '" + faction +"'")
