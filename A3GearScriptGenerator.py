@@ -9,7 +9,7 @@ def main():
     sql = sqlite3.connect('unit_database.db')
     cur = sql.cursor()
     print("Creating database if it doesn't exist")
-    cur.execute('CREATE TABLE IF NOT EXISTS units (faction varchar NOT NULL, unitRole varchar NOT NULL, arsenalPasteCode varchar NOT NULL)')
+    cur.execute('CREATE TABLE IF NOT EXISTS units (faction varchar NOT NULL, unitRole varchar NOT NULL, arsenalPasteCode varchar NOT NULL, genericClothes varchar NOT NULL)')
     cur.execute('CREATE TABLE IF NOT EXISTS uniforms (uniform varchar NOT NULL, gearSide varchar NOT NULL)')
     cur.execute('CREATE TABLE IF NOT EXISTS vests (vest varchar NOT NULL, gearSide varchar NOT NULL)')
     cur.execute('CREATE TABLE IF NOT EXISTS backpacks (backpack varchar NOT NULL, gearSide varchar NOT NULL)')
@@ -119,7 +119,7 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
     factionChangeButton = tk.Button(dataWindow,text="Change Faction", fg="red", command=lambda: UnitToFaction(cur,sql,dataWindow))
     factionChangeButton.grid(row=0, column=1)
 
-    submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt))
+    submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric))
     submitArsenalButton.grid(row=7, column=2, sticky=W)
 
     createGSButton = tk.Button(dataWindow,text="Generate GearScript",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString))
@@ -184,12 +184,13 @@ def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
     clearBoxesButton2 = tk.Button(gearWindow,text="Clear All Boxes",command=lambda: clearVests(uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,enablePopups))
     clearBoxesButton2.grid(row=2, column=3, sticky=W)
 
-def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt):
+def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric):
     _unit_side = unit_side
     _unit_role = unitRoleEnt.get()
+    _genericClothes = isGeneric.get()
     _arsenal = textbox.get("1.0",'end-1c')
     if(_unit_role != ""):
-        cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode) VALUES (?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal)))
+        cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode,genericClothes) VALUES (?,?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal),str(_genericClothes)))
         sql.commit()
     else:
         messagebox.showinfo("Notice", "Unit Role is empty.")	
@@ -229,6 +230,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
     varC = 0
     varD = 0
     varE = 0
+    varF = 0
 
     with open('gearScript.sqf', 'w') as file:
         #clothes assignments
@@ -288,39 +290,62 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
                     file.write(value)
         file.write('"];\n\n')  
             
-            #Backpacks
+        #Backpacks
         file.write('_backpacks = ["')
         for row in cur.execute("SELECT * FROM backpacks"):
             value, gearSide = (row)
             if(gearSide == _unit_side):
                 #will only trigger for first value
                 if(varE == 0):
-                    varE = varD + 1 
+                    varE = varE + 1 
                     file.write(str(value))
                 else:
                     file.write('","')                       
                     file.write(str(value))
         file.write('"];\n\n') 
+
+        file.write('_genericUnits = ["')
+        for row in cur.execute("SELECT * FROM units"):
+            faction, unitRole, arsenalPasteCode, genericClothes = (row)
+            print(type(genericClothes))
+            if(gearSide == _unit_side):
+                if(genericClothes == "1"):
+                    #will only trigger for first value
+                    if(varF == 0):
+                        varF = varF + 1 
+                        file.write(str(unitRole))
+                    else:
+                        file.write('","')                       
+                        file.write(str(unitRole))
+        file.write('"];\n\n') 
+
         file.write('_typesofUnit = toLower (_this select 0);\n')
         file.write('_unit = _this select 1; \n')
         file.write('removeBackpack _unit;\nremoveAllWeapons _unit;\nremoveAllItemsWithMagazines _unit;\nremoveAllAssignedItems _unit;\n')
 
         file.write('switch (_typeofUnit) do \n{\n')
 
+        actualUnitSide = _unit_side
         for row in cur.execute("SELECT * FROM units"):
-            faction, unitRole, arsenalPasteCode = (row)
+            faction, unitRole, arsenalPasteCode, genericClothes = (row)
             if(faction == _unit_side):
-                actualUnitSide = faction
                 file.write('case "' + unitRole + '": {\n')
                 file.write(arsenalPasteCode)
                 print("Created unit: '" + unitRole + "' on '" + faction +"'")
                 file.write('};\n\n')
 
+
         #default
         file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
         file.write('if (true) exitwith {player globalchat format ["DEBUG: Unit = %1. Gear template %2 does not exist, used Rifleman instead.",_unit,_typeofunit]};\n};\n')
-        #end closing bracket
+        
+        #end closing bracket for switch statement
         file.write('};\n')
+
+        #Add generic clothes in the sqf code
+        file.write('if(_typeofUnit in _genericunits) then {\n_backpackItems = backpackItems _unit;\nremoveBackpack _unit;\n_unit addBackpack selectrandom _backpacks;\n{_unit addItemToBackpack _x;} forEach _backpackItems;\n\n_vestitems = vestItems _unit;\nremoveVest _unit;\n_unit addvest selectRandom _vests;\n{_unit addItemToVest _x;} forEach _vestitems;\n\n_uniformitems = uniformItems _unit;\nremoveUniform _unit;\n_unit forceAddUniform selectRandom _uniforms;\n{_unit addItemToUniform _x;} forEach _uniformitems;\n\nremoveGoggles _unit;\n_unit addGoggles selectRandom _goggles;\n\nremoveHeadgear _unit;\n_unit addHeadgear selectRandom _helmets;\n\n};')
+         
+
         file.close()
         replaceThis()
         renameFiles(actualUnitSide)
@@ -341,7 +366,7 @@ def generateFn_AssignGear(cur):
         file.write('if !(local _unit) exitWith {};\n')
         file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
         for row in cur.execute("SELECT * FROM units"):
-            faction, unitRole, arsenalPasteCode = (row)
+            faction, unitRole, arsenalPasteCode, genericClothes = (row)
             file.write('if (_faction == "' + faction + '") then {\n')
             file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
         file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
@@ -351,6 +376,15 @@ def replaceThis():
     filedata = f.read()
     f.close()
     newdata = filedata.replace("this","_unit")
+    f = open('gearScript.sqf','w')
+    f.write(newdata)
+    f.close()
+
+    #Edge case file edit
+    f = open('gearScript.sqf','r')
+    filedata = f.read()
+    f.close()
+    newdata = filedata.replace("_unit = __unit select 1; ","_unit = this select 1; ")
     f = open('gearScript.sqf','w')
     f.write(newdata)
     f.close()
@@ -367,19 +401,9 @@ def clearFiles():
  		os.remove('default.sqf')
  	except OSError:
  		pass
- 
- 	try:
- 		os.remove('default_b.sqf')
- 	except OSError:
- 		pass
  	
  	try:
  		os.remove('gearScript.sqf')
- 	except OSError:
- 		pass
- 
- 	try:
- 		os.remove('gearScript_b.sqf')
  	except OSError:
  		pass
  
