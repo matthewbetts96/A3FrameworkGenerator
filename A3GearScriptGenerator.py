@@ -22,13 +22,15 @@ def main():
 def chooseSide(cur,sql):
     sideWindow = tk.Tk()
     sideWindow.title("Framework Generator")
-    sideWindow.minsize(140, 180)
+    sideWindow.minsize(325, 180)
+    sideWindow.minsize(height=300, width=180)
+    sideWindow.maxsize(height=300, width=180)
     
     #Initalise Checkbox Variables
     unitAssociationToSide = IntVar()
     unitAssociationToSide.set(0)
 
-    aboutLabel = Message(sideWindow, text = "GearScript Generator \nwritten by Matthew Betts with special thanks and contributions by . \n\nEnter a faction side \nand hit 'Submit' to begin.", fg="red")
+    aboutLabel = Message(sideWindow, text = "GearScript Generator \nwritten by Matthew Betts with special thanks and contributions by _name_. \n\nEnter a faction side and hit 'Submit' to begin.", fg="red")
     aboutLabel.grid(row=0, column=0)
 
     unitSideLabel = Label(sideWindow, text = "Enter Faction Name")
@@ -39,11 +41,11 @@ def chooseSide(cur,sql):
     unitSideLabel = Label(sideWindow, text = "Unit is associated with:")
     unitSideLabel.grid(row=3, column=0)
     
-    unitSideRadio =Radiobutton(sideWindow, variable=unitAssociationToSide, value = 0, text= "BLUFOR")
+    unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 0, text= "BLUFOR")
     unitSideRadio.grid(row=4, column=0)
-    unitSideRadio =Radiobutton(sideWindow, variable=unitAssociationToSide, value = 1, text= "OPFOR")
+    unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 1, text= "OPFOR")
     unitSideRadio.grid(row=5, column=0)
-    unitSideRadio =Radiobutton(sideWindow, variable=unitAssociationToSide, value = 2, text= "INDFOR")
+    unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 2, text= "INDFOR")
     unitSideRadio.grid(row=6, column=0)
 
     chooseSideButton = tk.Button(sideWindow,text="Submit",command=lambda: closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide))
@@ -106,7 +108,8 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
     enterGearButton = tk.Button(dataWindow, text="Insert Clothes", fg="red", command=lambda: enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString))
     enterGearButton.grid(row=5, column=0)
 
-    aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. If the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.", fg="red")
+    aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
+        If the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.", fg="red")
     aboutLabel.grid(row=6, column=0)
     
     pasteArsenalLabel = Label(dataWindow, text = 'Paste Arsenal Code Here: ', fg="red")
@@ -122,7 +125,7 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
     submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric))
     submitArsenalButton.grid(row=7, column=2, sticky=W)
 
-    createGSButton = tk.Button(dataWindow,text="Generate GearScript",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString))
+    createGSButton = tk.Button(dataWindow,text="Generate GearScript",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow))
     createGSButton.grid(row = 8, column = 2)
 
 def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
@@ -171,7 +174,8 @@ def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
     enablePopupsCheckbox1.grid(row=3, column=3)
 
     #Submit Gear Button
-    submitGearButton = tk.Button(gearWindow,text="Submit Clothes",command=lambda: submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,cur,sql,enablePopups))
+    submitGearButton = tk.Button(gearWindow,text="Submit Clothes",command=lambda: submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,\
+        cur,sql,enablePopups))
     submitGearButton.grid(row=6, column=2, sticky=W)
 
     #Change Faction
@@ -220,7 +224,7 @@ def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glasse
     if(_enablePopups == True):
         messagebox.showinfo("Notice", "Gear Inserted Successfully!")
 
-def generateGS(cur,sql,unit_side,unitAssociationToSideString):
+def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow):
 
     #initialises/resets values 
     #can't be in an __init__ due to needing to be run everytime a new set of sqf files is made
@@ -304,11 +308,11 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
                     file.write(str(value))
         file.write('"];\n\n') 
 
+        #Creates list for units that want to use generic clothes
         file.write('_genericUnits = ["')
         for row in cur.execute("SELECT * FROM units"):
             faction, unitRole, arsenalPasteCode, genericClothes = (row)
-            print(type(genericClothes))
-            if(gearSide == _unit_side):
+            if(faction == _unit_side):
                 if(genericClothes == "1"):
                     #will only trigger for first value
                     if(varF == 0):
@@ -343,15 +347,18 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString):
         file.write('};\n')
 
         #Add generic clothes in the sqf code
-        file.write('if(_typeofUnit in _genericunits) then {\n_backpackItems = backpackItems _unit;\nremoveBackpack _unit;\n_unit addBackpack selectrandom _backpacks;\n{_unit addItemToBackpack _x;} forEach _backpackItems;\n\n_vestitems = vestItems _unit;\nremoveVest _unit;\n_unit addvest selectRandom _vests;\n{_unit addItemToVest _x;} forEach _vestitems;\n\n_uniformitems = uniformItems _unit;\nremoveUniform _unit;\n_unit forceAddUniform selectRandom _uniforms;\n{_unit addItemToUniform _x;} forEach _uniformitems;\n\nremoveGoggles _unit;\n_unit addGoggles selectRandom _goggles;\n\nremoveHeadgear _unit;\n_unit addHeadgear selectRandom _helmets;\n\n};')
+        file.write('if(_typeofUnit in _genericunits) then {\n_backpackItems = backpackItems _unit;\nremoveBackpack _unit;\n_unit addBackpack selectrandom _backpacks;\
+            \n{_unit addItemToBackpack _x;} forEach _backpackItems;\n\n_vestitems = vestItems _unit;\nremoveVest _unit;\n_unit addvest selectRandom _vests;\
+            \n{_unit addItemToVest _x;} forEach _vestitems;\n\n_uniformitems = uniformItems _unit;\nremoveUniform _unit;\n_unit forceAddUniform selectRandom \
+            _uniforms;\n{_unit addItemToUniform _x;} forEach _uniformitems;\n\nremoveGoggles _unit;\n_unit addGoggles selectRandom _goggles;\n\nremoveHeadgear \
+            _unit;\n_unit addHeadgear selectRandom _helmets;\n\n};')
          
-
         file.close()
         replaceThis()
         renameFiles(actualUnitSide)
-        generateFn_AssignGear(cur)
+        generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString)
 
-def generateFn_AssignGear(cur):
+def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString):
     createdSides = []
  
     with open('fn_assignGear.sqf', 'w') as file:
@@ -370,7 +377,10 @@ def generateFn_AssignGear(cur):
             file.write('if (_faction == "' + faction + '") then {\n')
             file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
         file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
-		
+        file.close()
+        closeGunWindow(dataWindow)
+        platoonGenStart(_unit_side,unitAssociationToSideString)
+    
 def replaceThis():
     f = open('gearScript.sqf','r')
     filedata = f.read()
@@ -380,7 +390,7 @@ def replaceThis():
     f.write(newdata)
     f.close()
 
-    #Edge case file edit
+    #Edge case file edit for the one time you do want a 'this'
     f = open('gearScript.sqf','r')
     filedata = f.read()
     f.close()
@@ -396,12 +406,7 @@ def renameFiles(actualUnitSide):
        print("An error occured in the file re-naming. Files probably already exist.")
 
 def clearFiles():
- 	print("Removing old files...")
- 	try:
- 		os.remove('default.sqf')
- 	except OSError:
- 		pass
- 	
+ 	print("Removing old files...")	
  	try:
  		os.remove('gearScript.sqf')
  	except OSError:
@@ -428,7 +433,61 @@ def UnitToFaction(cur,sql,dataWindow):
     dataWindow.destroy()
     chooseSide(cur,sql)
 
+def closeGunWindow(dataWindow):
+    dataWindow.destroy()
+
+#Start of platoon Generator
+def platoonGenStart(_unit_side,unitAssociationToSideString):
+    platoonGenWindow = tk.Tk()
+    platoonGenWindow.title("Framework Generator - Platoon Generator")
+    platoonGenWindow.minsize(height=400, width=600)
+    platoonGenWindow.maxsize(height=400, width=600)
+
+    squadLabel = Label(platoonGenWindow, text = "Below, please enter a string that will define how your platoon is defined. Squad names \n \
+should be in caps (like ASL/A1 etc) and should be defined at the start. Members that make \n \
+up each squad should be seperated by a comma (,). Each squad should be seperated by a colon (:) \
+\n \n Example: ASL,sl,m:\nA1,ftl,m,r,r,r,ar,aar:\nA2,ftl,m,r,r,r,ar,aar:\nBSL,ftl (etc etc...) ")
+    squadLabel.place(relx=0.5, rely=0.2, anchor=CENTER)
+    textbox = Text(platoonGenWindow, width = 50, height = 10, wrap = WORD)
+    textbox.place(relx=0.5, rely=0.6, anchor=CENTER)
+    passString = tk.Button(platoonGenWindow,text="Parse String", fg="red", command=lambda: parseSquadString(textbox,_unit_side,unitAssociationToSideString))
+    passString.place(relx=0.5, rely=0.9, anchor=CENTER)
+
+def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
+    
+    #Not sure if I need to save this yet, keeping here just incase
+    #sql = sqlite3.connect('squad_database.db')
+    #cur = sql.cursor()
+    #cur.execute('CREATE TABLE IF NOT EXISTS squads (squad varchar NOT NULL, role varchar NOT NULL)')
+
+    #Test input
+    #ASL,sl,m:A1,ftl,m,r,r,r,ar,aar:A2,ftl,m,r,r,r,ar,aar:BSL,sl,m:B1,ftl,m,r,r,r,ar,aar:B2,ftl,m,r,r,r,ar,aar
+    squadPos = 0
+    with open('unitsInit.txt', 'w') as file:
+        inputText = textbox.get("1.0",'end-1c')
+        squadList = inputText.split(":")
+
+        for squadString in squadList:
+            squadString.split(",")
+            indivdualSquads = squadString.split(",")
+            #squad
+            #print(indivdualSquads)
+
+            #ASL/BSAL part only
+            squadName = indivdualSquads[0]
+            #print(indivdualSquads[0])
+
+            #squad minus the ASL/BSL part
+            indivdualSquads = indivdualSquads[1:]
+            file.write("----------------------" + squadName + "----------------------\n")
+            for member in indivdualSquads:
+                file.write('side' + _unit_side + squadName + ' = group this; ["' + indivdualSquads[squadPos] + '",this,"' + _unit_side + '"] call f_fnc_assignGear;\n')
+                squadPos = squadPos + 1
+            squadPos = 0
+    try: 
+        os.rename('unitsInit.sqf',_unit_side +'_Init.txt')
+    except Exception as e:
+       print("An error occured in the file re-naming. Files probably already exist.")
+
 if __name__ == "__main__":
     main()
-
-           

@@ -1,6 +1,6 @@
 # A3GearScriptGenerator
 
-Created by Matthew Betts using Python 3.4.
+Created/writen by Matthew Betts using Python 3.X.X
 
 For use with the F3_CA Framework (Fork of F3).
 https://github.com/CombinedArmsGaming/F3_CA
