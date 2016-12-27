@@ -16,10 +16,11 @@ def main():
 	cur.execute('CREATE TABLE IF NOT EXISTS helmets (helmet varchar NOT NULL,gearSide varchar NOT NULL)')
 	cur.execute('CREATE TABLE IF NOT EXISTS glasses (glasses varchar NOT NULL, gearSide varchar NOT NULL)')
 	sql.commit()
+	factionstring = "Enter Faction here"
 	clearFiles()
-	chooseSide(cur,sql)
+	chooseSide(cur,sql,factionstring)
 	
-def chooseSide(cur,sql):
+def chooseSide(cur,sql,factionstring):
 	sideWindow = tk.Tk()
 	sideWindow.title("Framework Generator")
 	sideWindow.minsize(height=200, width=275)
@@ -36,7 +37,8 @@ def chooseSide(cur,sql):
 	unitSideLabel.place(relx=0, rely=0)
 	unitSideEntry = tk.Entry(sideWindow)
 	unitSideEntry.place(relx=0, rely=0.1)
-	
+	unitSideEntry.insert(0, factionstring)
+
 	unitSideLabel = Label(sideWindow, text = "Unit is associated with:")
 	unitSideLabel.place(relx=0, rely=0.2)
 	
@@ -47,6 +49,7 @@ def chooseSide(cur,sql):
 	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 2, text= "INDFOR")
 	unitSideRadio.place(relx=0, rely=0.52)
 
+	#Progress to next stage
 	chooseSideButton = tk.Button(sideWindow,text="Submit",command=lambda: closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide))
 	chooseSideButton.place(relx=0.05, rely=0.7)
 
@@ -56,15 +59,18 @@ def closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide):
 	#get the side of the unit
 	unit_side = unitSideEntry.get()
 
+	_factionstring = ""
+	_factionstring = unitSideEntry.get()
+
 	#checks for if it's empty or contains spaces, if so returns to chooseSide()
 	if(unit_side == ""):
 		messagebox.showinfo("Notice", "Faction name is empty. Please fill and resubmit.")
 		sideWindow.destroy()
-		chooseSide(cur,sql)
+		chooseSide(cur,sql,_factionstring)
 	elif (" " in unit_side or "." in unit_side):
 		messagebox.showinfo("Notice", "Faction name contains space. Please remove space and resubmit.")
 		sideWindow.destroy()
-		chooseSide(cur,sql)
+		chooseSide(cur,sql,_factionstring)
 	else:
 		#if no problems arise, continue to enterData()
 		sideWindow.destroy()
@@ -110,20 +116,20 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 
 	aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
 		\nIf the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.", fg="red")
-	aboutLabel.place(relx=0.5, rely=0.5, anchor=CENTER)
+	aboutLabel.place(relx=0.5, rely=0.5)
 	
 	pasteArsenalLabel = Label(dataWindow, text = 'Paste Arsenal Code Here: ', fg="red")
-	pasteArsenalLabel.place(relx=0.5, rely=0.5, anchor=CENTER)
+	pasteArsenalLabel.place(relx=0.5, rely=0.5)
 	
 	textbox = Text(dataWindow, width = 75, height = 10, wrap = WORD)
-	textbox.place(relx=0.5, rely=0.5, anchor=CENTER)
+	textbox.place(relx=0.5, rely=0.5)
 
 
 	#Unit role
 	unitRoleLabel = Label(dataWindow, text = "Unit Role (r/ar etc):")
-	unitRoleLabel.place(relx=0.5, rely=0.5, anchor=CENTER)
+	unitRoleLabel.place(relx=0.5, rely=0.5)
 	unitRoleEnt = tk.Entry(dataWindow)
-	unitRoleEnt.place(relx=0.5, rely=0.5, anchor=CENTER)
+	unitRoleEnt.place(relx=0.5, rely=0.5)
 
 
 	#Check if unit is using generic clothes for faction
@@ -368,16 +374,16 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow):
 
 def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString):
 	createdSides = []
- 
+
 	with open('fn_assignGear.sqf', 'w') as file:
 		file.write('private ["_faction","_typeofUnit","_unit"];\n\n')
 		file.write('_typeofUnit = toLower (_this select 0);\n_unit = _this select 1;\n\n')
 		file.write('_faction = toLower (faction _unit);\nif(count _this > 2) then\n{\n_faction = toLower (_this select 2);\n};')
- 
+
 		#Insignia setup 
 		#WARNING -not even sure if this works, no guarantees 
 		file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
- 
+
 		file.write('if !(local _unit) exitWith {};\n')
 		file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
 		for row in cur.execute("SELECT * FROM units"):
@@ -419,7 +425,7 @@ def clearFiles():
 		os.remove('gearScript.sqf')
 	except OSError:
 		pass
- 
+
 def clearVests(uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,enablePopups):
 	uniformEntry.delete(0, END)
 	vestEntry.delete(0, END)
