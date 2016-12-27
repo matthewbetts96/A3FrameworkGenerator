@@ -102,7 +102,7 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	unitsideLabel1.place(relx=0, rely=0.05)
 
 	#Change Faction
-	factionChangeButton = tk.Button(dataWindow,text="Change Faction", fg="red", command=lambda: UnitToFaction(cur,sql,dataWindow))
+	factionChangeButton = tk.Button(dataWindow,text="Change Faction", fg="red", command=lambda: UnitToFaction(cur,sql,dataWindow,unit_side))
 	factionChangeButton.place(relx=0, rely=0.10)
 
 	enterGearButton = tk.Button(dataWindow, text="Insert Clothes", fg="red", command=lambda: enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString))
@@ -112,8 +112,6 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	platoonGenButt = tk.Button(dataWindow,text="Generate Markers", fg="red",command=lambda: platoonGenStart(unit_side,unitAssociationToSideString,dataWindow))
 	platoonGenButt.place(relx=0, rely=0.22)
 
-
-
 	aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
 		\nIf the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.", fg="red")
 	aboutLabel.place(relx=0.5, rely=0.5)
@@ -121,16 +119,15 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	pasteArsenalLabel = Label(dataWindow, text = 'Paste Arsenal Code Here: ', fg="red")
 	pasteArsenalLabel.place(relx=0.5, rely=0.5)
 	
+	#Entry box for arsenal
 	textbox = Text(dataWindow, width = 75, height = 10, wrap = WORD)
 	textbox.place(relx=0.5, rely=0.5)
-
 
 	#Unit role
 	unitRoleLabel = Label(dataWindow, text = "Unit Role (r/ar etc):")
 	unitRoleLabel.place(relx=0.5, rely=0.5)
 	unitRoleEnt = tk.Entry(dataWindow)
 	unitRoleEnt.place(relx=0.5, rely=0.5)
-
 
 	#Check if unit is using generic clothes for faction
 	isGenericClothes = Checkbutton(dataWindow, variable=isGeneric, onvalue = 1, offvalue = 0, text= "Generic Clothes?")
@@ -443,9 +440,9 @@ def gearToUnit(cur,sql,unit_side,unitAssociationToSide,gearWindow):
 	gearWindow.destroy()
 	enterData(cur,sql,unit_side,unitAssociationToSide)
 
-def UnitToFaction(cur,sql,dataWindow):
+def UnitToFaction(cur,sql,dataWindow,unit_side):
 	dataWindow.destroy()
-	chooseSide(cur,sql)
+	chooseSide(cur,sql,unit_side)
 
 def closeGunWindow(dataWindow):
 	dataWindow.destroy()
