@@ -9,7 +9,7 @@ def main():
 	sql = sqlite3.connect('unit_database.db')
 	cur = sql.cursor()
 	print("Creating database if it doesn't exist")
-	cur.execute('CREATE TABLE IF NOT EXISTS units (faction varchar NOT NULL, unitRole varchar NOT NULL, arsenalPasteCode varchar NOT NULL, genericClothes varchar NOT NULL)')
+	cur.execute('CREATE TABLE IF NOT EXISTS units (faction varchar NOT NULL, unitRole varchar NOT NULL, arsenalPasteCode varchar NOT NULL, genericClothes varchar NOT NULL, isSpecialist varchar NOT NULL)')
 	cur.execute('CREATE TABLE IF NOT EXISTS uniforms (uniform varchar NOT NULL, gearSide varchar NOT NULL)')
 	cur.execute('CREATE TABLE IF NOT EXISTS vests (vest varchar NOT NULL, gearSide varchar NOT NULL)')
 	cur.execute('CREATE TABLE IF NOT EXISTS backpacks (backpack varchar NOT NULL, gearSide varchar NOT NULL)')
@@ -33,7 +33,7 @@ def chooseSide(cur,sql,factionstring):
 	aboutLabel = Message(sideWindow, text = "GearScript Generator written by Matthew Betts with special thanks and contributions by _name_. Enter a faction side and hit 'Submit' to begin.", fg="red")
 	aboutLabel.place(relx=0.5, rely=0)
 
-	unitSideLabel = Label(sideWindow, text = "Enter Faction Name")
+	unitSideLabel = Label(sideWindow, text = "Faction:")
 	unitSideLabel.place(relx=0, rely=0)
 	unitSideEntry = tk.Entry(sideWindow)
 	unitSideEntry.place(relx=0, rely=0.1)
@@ -76,11 +76,11 @@ def closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide):
 		sideWindow.destroy()
 		unitAssociationToSideString = ""
 		if(unitAssociationToSide.get() == 0):
-			unitAssociationToSideString = "BLUFOR"
+			unitAssociationToSideString = "Blufor"
 		if(unitAssociationToSide.get() == 1):
-			unitAssociationToSideString = "OPFOR"
+			unitAssociationToSideString = "Opfor"
 		if(unitAssociationToSide.get() == 2):
-		   unitAssociationToSideString = "INDFOR"
+		   unitAssociationToSideString = "Indfor"
 		enterData(cur,sql,unit_side,unitAssociationToSideString)
 		
 def enterData(cur,sql,unit_side,unitAssociationToSideString):
@@ -93,6 +93,9 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	#Initalise Checkbox Variables
 	isGeneric = IntVar()
 	isGeneric.set(0)
+	
+	isSpecialist = IntVar()
+	isSpecialist.set(0)
 	
 	#Show what the side is that they entered in the previous window
 	unitsideLabel = Label(dataWindow, text = 'Faction = ' + unit_side, fg="blue",relief=RIDGE)
@@ -111,33 +114,41 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	#Generate Markers
 	platoonGenButt = tk.Button(dataWindow,text="Generate Markers", fg="red",command=lambda: platoonGenStart(unit_side,unitAssociationToSideString,dataWindow))
 	platoonGenButt.place(relx=0, rely=0.22)
-
-	aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
-		\nIf the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.", fg="red")
-	aboutLabel.place(relx=0.5, rely=0.5)
 	
 	pasteArsenalLabel = Label(dataWindow, text = 'Paste Arsenal Code Here: ', fg="red")
-	pasteArsenalLabel.place(relx=0.5, rely=0.5)
+	pasteArsenalLabel.place(relx=0.25, rely=0.05)
 	
 	#Entry box for arsenal
-	textbox = Text(dataWindow, width = 75, height = 10, wrap = WORD)
-	textbox.place(relx=0.5, rely=0.5)
+	textbox = Text(dataWindow, width = 60, height = 10, wrap = WORD)
+	textbox.place(relx=0.25, rely=0.1)
+
+	aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
+		\nIf the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.\
+		\nTo insert Generic Clothes, press the 'Insert Clothes' button to the left.", fg="red")
+	aboutLabel.place(relx=0.65, rely=0.45)
 
 	#Unit role
 	unitRoleLabel = Label(dataWindow, text = "Unit Role (r/ar etc):")
-	unitRoleLabel.place(relx=0.5, rely=0.5)
+	unitRoleLabel.place(relx=0.25, rely=0.45)
 	unitRoleEnt = tk.Entry(dataWindow)
-	unitRoleEnt.place(relx=0.5, rely=0.5)
+	unitRoleEnt.place(relx=0.25, rely=0.5)
+	
+	isSpecialistLabel = Label(dataWindow, text = "Has own marker in squad?:")
+	isSpecialistLabel.place(relx=0.25, rely=0.55)
+	isSpecialistRadio = Radiobutton(dataWindow, variable=isSpecialist, value = 1, text= "Yes")
+	isSpecialistRadio.place(relx=0.25, rely=0.6)
+	isSpecialistRadio = Radiobutton(dataWindow, variable=isSpecialist, value = 0, text= "No")
+	isSpecialistRadio.place(relx=0.25, rely=0.65)
 
 	#Check if unit is using generic clothes for faction
 	isGenericClothes = Checkbutton(dataWindow, variable=isGeneric, onvalue = 1, offvalue = 0, text= "Generic Clothes?")
-	isGenericClothes.place(relx=0.5, rely=0.5, anchor=CENTER)
+	isGenericClothes.place(relx=0.65, rely=0.77)
 
-	submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric))
-	submitArsenalButton.place(relx=0.5, rely=0.5, anchor=CENTER)
+	submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist))
+	submitArsenalButton.place(relx=0.4, rely=0.9)
 
-	createGSButton = tk.Button(dataWindow,text="Generate GearScript",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow))
-	createGSButton.place(relx=0.5, rely=0.5, anchor=CENTER)
+	createGSButton = tk.Button(dataWindow,text="Generate GearScript", fg="red",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow))
+	createGSButton.place(relx=0, rely=0.28)
 
 def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
 	dataWindow.destroy()
@@ -199,13 +210,14 @@ def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
 	clearBoxesButton2 = tk.Button(gearWindow,text="Clear All Boxes",command=lambda: clearVests(uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,enablePopups))
 	clearBoxesButton2.grid(row=2, column=3, sticky=W)
 
-def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric):
+def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist):
 	_unit_side = unit_side
 	_unit_role = unitRoleEnt.get()
 	_genericClothes = isGeneric.get()
+	_isSpecialist = isSpecialist.get()
 	_arsenal = textbox.get("1.0",'end-1c')
 	if(_unit_role != ""):
-		cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode,genericClothes) VALUES (?,?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal),str(_genericClothes)))
+		cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode,genericClothes,isSpecialist) VALUES (?,?,?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal),str(_genericClothes),_isSpecialist))
 		sql.commit()
 	else:
 		messagebox.showinfo("Notice", "Unit Role is empty.")	
@@ -342,7 +354,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow):
 
 		actualUnitSide = _unit_side
 		for row in cur.execute("SELECT * FROM units"):
-			faction, unitRole, arsenalPasteCode, genericClothes = (row)
+			faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
 			if(faction == _unit_side):
 				file.write('case "' + unitRole + '": {\n')
 				file.write(arsenalPasteCode)
@@ -380,13 +392,16 @@ def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideStr
 		#Insignia setup 
 		#WARNING -not even sure if this works, no guarantees 
 		file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
-
+		
 		file.write('if !(local _unit) exitWith {};\n')
 		file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
+		factionList = []
 		for row in cur.execute("SELECT * FROM units"):
 			faction, unitRole, arsenalPasteCode, genericClothes = (row)
-			file.write('if (_faction == "' + faction + '") then {\n')
-			file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
+			if faction not in factionList:
+				factionList.append(faction)
+				file.write('if (_faction == "' + faction + '") then {\n')
+				file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
 		file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
 		file.close()
 		#closeGunWindow(dataWindow)
@@ -401,20 +416,22 @@ def replaceThis():
 	f.write(newdata)
 	f.close()
 
-	#Edge case file edit for the one time you do want a 'this'
+	#Edge case(s)file edit for the one time you do want a 'this'
 	f = open('gearScript.sqf','r')
 	filedata = f.read()
 	f.close()
-	newdata = filedata.replace("_unit = __unit select 1; ","_unit = this select 1; ")
+	newdata = filedata.replace("_unit = __unit select 1; ","_unit = _this select 1; ")
+	newerdata = filedata.replace("_typesofUnit = toLower (__unit select 0);","_typesofUnit = toLower (_this select 0);")
 	f = open('gearScript.sqf','w')
 	f.write(newdata)
+	f.write(newerdata)
 	f.close()
 
 def renameFiles(actualUnitSide):
 	try: 
 		os.rename('gearScript.sqf','f_assignGear_' + actualUnitSide +'.sqf')
 	except Exception as e:
-	   print("An error occured in the file re-naming. Files probably already exist.")
+	   print("An error occured in the file re-naming. File(s) probably already exist.")
 
 def clearFiles():
 	print("Removing old files...")	
@@ -466,34 +483,64 @@ up each squad should be seperated by a comma (,). Each squad should be seperated
 	passString.place(relx=0.5, rely=0.9, anchor=CENTER)
 
 def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
-	
-	#Not sure if I need to save this yet, keeping here just incase
-	#sql = sqlite3.connect('squad_database.db')
-	#cur = sql.cursor()
-	#cur.execute('CREATE TABLE IF NOT EXISTS squads (squad varchar NOT NULL, role varchar NOT NULL)')
-
+	sql = sqlite3.connect('unit_database.db')
+	cur = sql.cursor()
 	#Test input
-	#ASL,sl,m:A1,ftl,m,r,r,r,ar,aar:A2,ftl,m,r,r,r,ar,aar:BSL,sl,m:B1,ftl,m,r,r,r,ar,aar:B2,ftl,m,r,r,r,ar,aar
-	squadPos = 0
+	#ASL,b_hq,ColorYellow,sl,m:A1,b_hq,ColorBlue,ftl,m,r,r,r,ar,aar
 	with open('unitsInit.txt', 'w') as file:
 		inputText = textbox.get("1.0",'end-1c')
 		squadList = inputText.split(":")
-
+			
+		#Converts the inputted string
 		#Trust me this works, somehow...
 		for squadString in squadList:
 			squadString.split(",")
 			indivdualSquads = squadString.split(",")
 			squadName = indivdualSquads[0]
-			indivdualSquads = indivdualSquads[1:]
+			indivdualSquads = indivdualSquads[3:]
 			file.write("----------------------" + squadName + "----------------------\n")
 			for member in indivdualSquads:
-				file.write('side' + _unit_side + squadName + ' = group this; ["' + indivdualSquads[squadPos] + '",this,"' + _unit_side + '"] call f_fnc_assignGear;\n')
-				squadPos = squadPos + 1
-			squadPos = 0
+				file.write(_unit_side + "_" + squadName + '= group this; ["' + member + '",this,"' + _unit_side + '"] call fn_fnc_assignGear; ')
+						
+				#Opens DB
+				for row in cur.execute("SELECT * FROM units"):
+					faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+					if(faction ==_unit_side):
+						if(unitRole == member):
+							if(isSpecialist == "1"):
+								file.write('missionNamespace setvariable ["' + _unit_side + '_' + squadName + '_' + unitRole + '",this,true]')
+				file.write("\n")
 	try: 
 		os.rename('unitsInit.sqf',_unit_side +'_Init.txt')
 	except Exception as e:
-	   print("An error occured in the file re-naming. Files probably already exist.")
+	   print("An error occured in the file re-naming. File probably already exist.")
 
+	with open('groupmarkers.txt', 'w') as file:	
+		for squadString in squadList:
+			squadString.split(",")
+			indivdualSquads = squadString.split(",")
+			squadName = indivdualSquads[0]
+			markerType = indivdualSquads[1]
+			markerColour = indivdualSquads[2]
+			squadLeader = indivdualSquads[3]
+			file.write('["' + _unit_side + '_' + squadName + '","' + markerType +'","' + squadName + squadLeader + '","'+  markerColour + '"] spawn f_fnc_localGroupMarker;\n')
+			
+		for squadString in squadList:
+			squadString.split(",")
+			indivdualSquads = squadString.split(",")
+			squadName = indivdualSquads[0]
+			indivdualSquads = indivdualSquads[3:]
+			for member in indivdualSquads:						
+				for row in cur.execute("SELECT * FROM units"):
+					faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+					if(faction == _unit_side):
+						if(unitRole == member):
+							if(isSpecialist == "1"):
+								file.write('["' + _unit_side + '_' + squadName + '_' + unitRole + '","' + markerType + '","' + squadName + unitRole + '","'+  markerColour + '"] spawn f_fnc_localSpecialistMarker;\n')
+	try: 
+		os.rename('groupmarkers.txt','f_setLocalGroupMarkers_'+unitAssociationToSideString +'.sqf')
+	except Exception as e:
+	   print("An error occured in the file re-naming. File probably already exist.")
 if __name__ == "__main__":
 	main()
+
