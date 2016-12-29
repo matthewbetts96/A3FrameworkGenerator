@@ -489,8 +489,8 @@ def platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow):
 	cur = sql.cursor()	
 	platoonGenWindow = tk.Tk()
 	platoonGenWindow.title("Framework Generator - Platoon Generator")
-	platoonGenWindow.minsize(height=600, width=1000)
-	platoonGenWindow.maxsize(height=600, width=1000)
+	platoonGenWindow.minsize(height=500, width=1000)
+	platoonGenWindow.maxsize(height=500, width=1000)
 	
 	#Show what the side is that they entered in the start window
 	unitsideLabel = Label(platoonGenWindow, text = 'Faction = ' + _unit_side, fg="blue",relief=RIDGE)
@@ -549,26 +549,28 @@ def platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow):
 	
 	coloursLabel1 = Label(platoonGenWindow, text = 'Markers:',relief=RIDGE)
 	coloursLabel1.place(relx=0.1, rely=0.25)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_support = Support units (MMG,HMG)')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_hq = Headquarters')
 	coloursLabel1.place(relx=0.1, rely=0.3)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_motor_inf = Launchers (MAT, HAT)')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_support = Support units (MMG,HMG)')
 	coloursLabel1.place(relx=0.1, rely=0.35)
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_motor_inf = Launchers (MAT, HAT)')
+	coloursLabel1.place(relx=0.1, rely=0.4)
 	coloursLabel1 = Label(platoonGenWindow, text = 'b_mortar = Mortars')
-	coloursLabel1.place(relx=0.1, rely=0.40)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_maint = Engineers')
 	coloursLabel1.place(relx=0.1, rely=0.45)
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_maint = Engineers')
+	coloursLabel1.place(relx=0.1, rely=0.5)
 	coloursLabel1 = Label(platoonGenWindow, text = 'b_mech_inf = IFVs & APCs')
-	coloursLabel1.place(relx=0.1, rely=0.50)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_armor = Tanks')
 	coloursLabel1.place(relx=0.1, rely=0.55)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_recon = Recon')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_armor = Tanks')
 	coloursLabel1.place(relx=0.1, rely=0.6)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_air = Helicopters')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_recon = Recon')
 	coloursLabel1.place(relx=0.1, rely=0.65)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_plane = Planes')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_air = Helicopters')
 	coloursLabel1.place(relx=0.1, rely=0.7)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_art = Artillery')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_plane = Planes')
 	coloursLabel1.place(relx=0.1, rely=0.75)
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_art = Artillery')
+	coloursLabel1.place(relx=0.1, rely=0.8)
 
 	
 	squadLabel = Label(platoonGenWindow, text = "In the text box below, please define how you want your platoon to be set out.\n Init lines and marker files will automatically be generated for you. \n\n\
@@ -576,10 +578,10 @@ Rules for defining.\n\n All variables must be seperated by a comma (,). The end 
 The next is it's marker type, then followed by it's colour. \nValid inputs of these are listed to the left. After that, you define the units in the squad (again seperated by a comma)\n with the starting unit \
 being the leader of the squad to which the marker will be attached too.\n\nExample input: ASL,b_hq,ColorYellow,sl,m:A1,b_hq,ColorBlue,ftl,m,r,r,r,ar,aar")
 	squadLabel.place(relx=0.17, rely=0)
-	textbox = Text(platoonGenWindow, width = 50, height = 10, wrap = WORD)
-	textbox.place(relx=0.5, rely=0.6, anchor=CENTER)
+	textbox = Text(platoonGenWindow, width = 60, height = 15, wrap = WORD)
+	textbox.place(relx=0.35, rely=0.35)
 	passString = tk.Button(platoonGenWindow,text="Parse Platoon String", fg="red", command=lambda: parseSquadString(textbox,_unit_side,unitAssociationToSideString))
-	passString.place(relx=0.5, rely=0.9, anchor=CENTER)
+	passString.place(relx=0.6, rely=0.9, anchor=CENTER)
 
 def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 	sql = sqlite3.connect('unit_database.db')
@@ -612,7 +614,7 @@ def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 	try: 
 		os.rename('unitsInit.sqf',_unit_side + unitAssociationToSideString + '_Init.txt')
 	except Exception as e:
-	   print("An error occured in the file re-naming. File probably already exist.")
+	   print("An error occured in the file re-naming. File probably already exist. Overwriting...")
 
 	with open('groupmarkers.txt', 'w') as file:	
 		for squadString in squadList:
@@ -639,7 +641,7 @@ def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 	try: 
 		os.rename('groupmarkers.txt','f_setLocalGroupMarkers_'+unitAssociationToSideString +'.sqf')
 	except Exception as e:
-	   print("An error occured in the file re-naming. File probably already exists.")
+	   print("An error occured in the file re-naming. File probably already exists. Overwriting...")
 if __name__ == "__main__":
 	main()
 
