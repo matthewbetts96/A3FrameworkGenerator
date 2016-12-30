@@ -23,15 +23,15 @@ def main():
 def chooseSide(cur,sql,factionstring):
 	sideWindow = tk.Tk()
 	sideWindow.title("Framework Generator")
-	sideWindow.minsize(height=200, width=275)
-	sideWindow.maxsize(height=200, width=275)
+	sideWindow.minsize(height=200, width=300)
+	sideWindow.maxsize(height=200, width=300)
 	
 	#Initalise Checkbox Variables
 	unitAssociationToSide = IntVar()
 	unitAssociationToSide.set(0)
 
-	aboutLabel = Message(sideWindow, text = "GearScript Generator written by Matthew Betts with special thanks and contributions by _name_. Enter a faction side and hit 'Submit' to begin.", fg="red")
-	aboutLabel.place(relx=0.5, rely=0)
+	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks and contributions\nby Poulern.\n\nEnter a faction side, select who it is associated with and hit 'Start' to begin.", fg="red")
+	aboutLabel.place(relx=0.4, rely=0)
 
 	unitSideLabel = Label(sideWindow, text = "Faction:")
 	unitSideLabel.place(relx=0, rely=0)
@@ -50,7 +50,7 @@ def chooseSide(cur,sql,factionstring):
 	unitSideRadio.place(relx=0, rely=0.52)
 
 	#Progress to next stage
-	chooseSideButton = tk.Button(sideWindow,text="Submit",command=lambda: closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide))
+	chooseSideButton = tk.Button(sideWindow,text="Start",command=lambda: closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide))
 	chooseSideButton.place(relx=0.05, rely=0.7)
 
 	sideWindow.mainloop()
@@ -140,30 +140,33 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	isSpecialistRadio.place(relx=0.25, rely=0.6)
 	isSpecialistRadio = Radiobutton(dataWindow, variable=isSpecialist, value = 0, text= "No")
 	isSpecialistRadio.place(relx=0.25, rely=0.65)
+	isSpecialistLabel2 = Label(dataWindow, text = "Note: Leaders of squads will \nautomatically get markers.")
+	isSpecialistLabel2.place(relx=0.25, rely=0.7)
+#Note: Leaders of squads will \nautomatically get markers.
 
 	#Enable popups?
 	enablePopups = IntVar()
 	enablePopups.set(1)
 	enablePopupsCheckbox1 = Checkbutton(dataWindow, variable=enablePopups, onvalue = 1, offvalue = 0, text= "Enable Popups?")
-	enablePopupsCheckbox1.place(relx=0.25, rely=0.75)
+	enablePopupsCheckbox1.place(relx=0.25, rely=0.9)
 
 	#Check if unit is using generic clothes for faction
 	isGenericClothes = Checkbutton(dataWindow, variable=isGeneric, onvalue = 1, offvalue = 0, text= "Generic Clothes?")
 	isGenericClothes.place(relx=0.65, rely=0.77)
 
 	submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePopups))
-	submitArsenalButton.place(relx=0.4, rely=0.9)
+	submitArsenalButton.place(relx=0.45, rely=0.9)
 
-	createGSButton = tk.Button(dataWindow,text="Generate GearScript", fg="red",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow))
+	createGSButton = tk.Button(dataWindow,text="Generate GearScript", fg="red",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePopups))
 	createGSButton.place(relx=0, rely=0.28)
 
 def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
 	dataWindow.destroy()
 	gearWindow = tk.Tk()
 	gearWindow.title("Framework Generator")
-	unitsideLabel = Label(gearWindow, text = 'Faction = ' + unit_side, fg="red",relief=RIDGE)
+	unitsideLabel = Label(gearWindow, text = 'Faction = ' + unit_side, fg="blue",relief=RIDGE)
 	unitsideLabel.grid(row=0, column=0)
-	unitsideLabel = Label(gearWindow, text = 'Associated with = ' + unitAssociationToSideString, fg="red",relief=RIDGE)
+	unitsideLabel = Label(gearWindow, text = 'Associated with = ' + unitAssociationToSideString, fg="blue",relief=RIDGE)
 	unitsideLabel.grid(row=1, column=0)
 
 	#Uniform
@@ -231,6 +234,7 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,e
 		unitRoleEnt.delete(0, END)
 		if(_enablePopups == True):
 			messagebox.showinfo("Notice", "Arsenal Inserted Successfully!")
+			print("Inserted unit on {} side with {} role.".format(_unit_side,_unit_role))
 	else:
 		messagebox.showinfo("Notice", "Unit Role is empty.")	
 		
@@ -259,11 +263,12 @@ def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glasse
 	if(_enablePopups == True):
 		messagebox.showinfo("Notice", "Gear Inserted Successfully!")
 
-def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow):
+def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePopups):
 
 	#initialises/resets values 
 	#can't be in an __init__ due to needing to be run everytime a new set of sqf files is made
 	_unit_side = unit_side
+	_enablePopups = enablePopups.get()
 	varA = 0
 	varB = 0
 	varC = 0
@@ -391,9 +396,9 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow):
 		file.close()
 		replaceThis()
 		renameFiles(actualUnitSide)
-		generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString)
+		generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString,_enablePopups)
 
-def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString):
+def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString,_enablePopups):
 	createdSides = []
 
 	with open('fn_assignGear.sqf', 'w') as file:
@@ -416,6 +421,8 @@ def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideStr
 				file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
 		file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
 		file.close()
+	if(_enablePopups == True):
+		messagebox.showinfo("Notice", "AssignGear files built successfully!")
 	
 def replaceThis():
 	f = open('gearScript.sqf','r')
@@ -426,7 +433,7 @@ def replaceThis():
 	f.write(newdata)
 	f.close()
 
-	#Edge case(s)file edit for the one time you do want a 'this'
+	#Edge case(s) file edit for the times you do actually want a 'this'
 	f = open('gearScript.sqf','r')
 	filedata = f.read()
 	f.close()
@@ -439,7 +446,7 @@ def replaceThis():
 
 def renameFiles(actualUnitSide):
 	try: 
-		os.rename('gearScript.sqf','f_fnc_assignGear_' + actualUnitSide +'.sqf')
+		os.rename('gearScript.sqf','f_assignGear_' + actualUnitSide +'.sqf')
 	except Exception as e:
 	   print("An error occured in the file re-naming. File(s) probably already exist.")
 
