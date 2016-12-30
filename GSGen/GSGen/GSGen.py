@@ -89,6 +89,9 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 
 	dataWindow.minsize(height=500, width=700)
 	dataWindow.maxsize(height=500, width=700)
+	
+	#Display any units already in this faction
+	displayUnits(cur,dataWindow,unit_side)
 
 	#Initalise Checkbox Variables
 	isGeneric = IntVar()
@@ -154,7 +157,7 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	isGenericClothes = Checkbutton(dataWindow, variable=isGeneric, onvalue = 1, offvalue = 0, text= "Generic Clothes?")
 	isGenericClothes.place(relx=0.65, rely=0.77)
 
-	submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePopups))
+	submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePopups,dataWindow))
 	submitArsenalButton.place(relx=0.45, rely=0.9)
 
 	createGSButton = tk.Button(dataWindow,text="Generate GearScript", fg="red",command=lambda: generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePopups))
@@ -220,7 +223,7 @@ def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
 	clearBoxesButton2 = tk.Button(gearWindow,text="Clear All Boxes",command=lambda: clearVests(uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,enablePopups))
 	clearBoxesButton2.grid(row=2, column=3, sticky=W)
 
-def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePopups):
+def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePopups,dataWindow):
 	_unit_side = unit_side
 	_unit_role = unitRoleEnt.get()
 	_genericClothes = isGeneric.get()
@@ -232,6 +235,8 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,e
 		sql.commit()
 		textbox.delete('1.0', END)
 		unitRoleEnt.delete(0, END)
+		#Update the units in faction display
+		displayUnits(cur,dataWindow,unit_side)
 		if(_enablePopups == True):
 			messagebox.showinfo("Notice", "Arsenal Inserted Successfully!")
 			print("Inserted unit on {} side with {} role.".format(_unit_side,_unit_role))
@@ -488,6 +493,22 @@ def platoonToGuns(platoonGenWindow,cur,sql,_unit_side,unitAssociationToSideStrin
 
 def closeGunWindow(dataWindow):
 	dataWindow.destroy()
+
+def displayUnits(cur,dataWindow,unit_side):
+	#Get a list of all unique units in this faction
+	listOfUnits1 = []
+	for row in cur.execute("SELECT * FROM units"):
+		faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+		if(faction ==unit_side):
+			if(unitRole not in listOfUnits1):
+				listOfUnits1.append(unitRole)
+	unitsideLabel1 = Label(dataWindow, text = 'Units in this faction are:', fg="green",relief=RIDGE)
+	unitsideLabel1.place(relx=0, rely=0.5)
+	listOfUnitsLabel = Label(dataWindow)
+	listOfUnitsLabel.place(relx=0.05, rely=0.55)
+	for val in listOfUnits1:
+		text = listOfUnitsLabel.cget("text") + val + '\n'
+		listOfUnitsLabel.configure(text=text)
 
 #Start of platoon Generator
 def platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow):
