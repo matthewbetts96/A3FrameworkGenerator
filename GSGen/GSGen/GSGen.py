@@ -30,7 +30,7 @@ def chooseSide(cur,sql,factionstring):
 	unitAssociationToSide = IntVar()
 	unitAssociationToSide.set(0)
 
-	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks and contributions\nby Poulern.\n\nEnter a faction name, select who it is associated with and hit 'Start' to begin.", fg="red")
+	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks to Poulern\n for his contributions.\n\nEnter a faction name, select who it is associated with and hit 'Start' to begin.", fg="red")
 	aboutLabel.place(relx=0.4, rely=0)
 
 	unitSideLabel = Label(sideWindow, text = "Faction:")
@@ -230,18 +230,31 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,e
 	_isSpecialist = isSpecialist.get()
 	_enablePopups = enablePopups.get()
 	_arsenal = textbox.get("1.0",'end-1c')
-	if(_unit_role != ""):
-		cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode,genericClothes,isSpecialist) VALUES (?,?,?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal),str(_genericClothes),_isSpecialist))
-		sql.commit()
-		textbox.delete('1.0', END)
-		unitRoleEnt.delete(0, END)
-		#Update the units in faction display
-		displayUnits(cur,dataWindow,unit_side)
-		if(_enablePopups == True):
-			messagebox.showinfo("Notice", "Arsenal Inserted Successfully!")
-			print("Inserted unit on {} side with {} role.".format(_unit_side,_unit_role))
+	if(_unit_role == ""):
+		messagebox.showinfo("Notice", "Unit Role is empty.")
+	elif(_arsenal == ""):
+		messagebox.showinfo("Notice", "Arsenal box is empty.")
 	else:
-		messagebox.showinfo("Notice", "Unit Role is empty.")	
+		#get all of the current unit role names in this faction, store them in a list 
+		listOfRoles = []
+		for row in cur.execute("SELECT * FROM units"):
+			faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+			if(faction == unit_side):
+				if(unitRole not in listOfRoles):
+					listOfRoles.append(unitRole)
+		if(_unit_role in listOfRoles):
+			messagebox.showinfo("Notice", "Error. Unit " + _unit_role + " has already been entered.")
+		else:
+			cur.execute('INSERT INTO units(faction, unitRole, arsenalPasteCode, genericClothes,isSpecialist) VALUES (?,?,?,?,?)',(str(_unit_side),str(_unit_role),str(_arsenal),str(_genericClothes),_isSpecialist))
+			sql.commit()
+			textbox.delete('1.0', END)
+			unitRoleEnt.delete(0, END)
+			#Update the units in faction display
+			displayUnits(cur,dataWindow,unit_side)
+			if(_enablePopups == True):
+				messagebox.showinfo("Notice", "Arsenal Inserted Successfully!")
+				print("Inserted unit on {} side with {} role.".format(_unit_side,_unit_role))
+		
 		
 def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,cur,sql,enablePopups):
 	_uniform = uniformEntry.get()
@@ -379,7 +392,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 			if(faction == _unit_side):
 				file.write('case "' + unitRole + '": {\n')
 				file.write(arsenalPasteCode)
-				print("Created unit: '" + unitRole + "' on '" + faction +"'")
+				print("Created unit: {} on {}").format(unitRole,faction)
 				file.write('};\n\n')
 
 
@@ -396,7 +409,6 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 			\n{_unit addItemToVest _x;} forEach _vestitems;\n\n_uniformitems = uniformItems _unit;\nremoveUniform _unit;\n_unit forceAddUniform selectRandom \
 			_uniforms;\n{_unit addItemToUniform _x;} forEach _uniformitems;\n\nremoveGoggles _unit;\n_unit addGoggles selectRandom _goggles;\n\nremoveHeadgear \
 			_unit;\n_unit addHeadgear selectRandom _helmets;\n\n};')
-		 
 		file.close()
 		replaceThis()
 		renameFiles(actualUnitSide)
