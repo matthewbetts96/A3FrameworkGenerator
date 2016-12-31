@@ -7,4 +7,9 @@ https://github.com/CombinedArmsGaming/F3_CA
 
 You are free to use and distribute this software as long as you don't claim it as your own.
 
-If you find any bugs, let me know.
+If you find any bugs, let me know by raising an issue.
+
+================================================================
+
+
+
