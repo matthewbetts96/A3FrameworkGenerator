@@ -398,7 +398,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 			_unit;\n_unit addHeadgear selectRandom _helmets;\n\n};')
 		 
 		file.close()
-		#replaceThis()
+		replaceThis()
 		renameFiles(actualUnitSide)
 		generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups)
 
