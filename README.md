@@ -11,5 +11,6 @@ If you find any bugs, let me know by raising an issue.
 
 ================================================================
 
+Once the files are generated they just need to be placed into the correct folders and overwrite the current ones there.
 
 
