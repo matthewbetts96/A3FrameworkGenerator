@@ -30,7 +30,7 @@ def chooseSide(cur,sql,factionstring):
 	unitAssociationToSide = IntVar()
 	unitAssociationToSide.set(0)
 
-	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks and contributions\nby Poulern.\n\nEnter a faction side, select who it is associated with and hit 'Start' to begin.", fg="red")
+	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks and contributions\nby Poulern.\n\nEnter a faction name, select who it is associated with and hit 'Start' to begin.", fg="red")
 	aboutLabel.place(relx=0.4, rely=0)
 
 	unitSideLabel = Label(sideWindow, text = "Faction:")
@@ -269,7 +269,6 @@ def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glasse
 		messagebox.showinfo("Notice", "Gear Inserted Successfully!")
 
 def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePopups):
-
 	#initialises/resets values 
 	#can't be in an __init__ due to needing to be run everytime a new set of sqf files is made
 	_unit_side = unit_side
@@ -399,11 +398,11 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 			_unit;\n_unit addHeadgear selectRandom _helmets;\n\n};')
 		 
 		file.close()
-		replaceThis()
+		#replaceThis()
 		renameFiles(actualUnitSide)
-		generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString,_enablePopups)
+		generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups)
 
-def generateFn_AssignGear(cur,sql,dataWindow,_unit_side,unitAssociationToSideString,_enablePopups):
+def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups):
 	createdSides = []
 
 	with open('fn_assignGear.sqf', 'w') as file:
@@ -443,11 +442,18 @@ def replaceThis():
 	filedata = f.read()
 	f.close()
 	newdata = filedata.replace("_unit = __unit select 1; ","_unit = _this select 1; ")
-	newerdata = filedata.replace("_typesofUnit = toLower (__unit select 0);","_typesofUnit = toLower (_this select 0);")
 	f = open('gearScript.sqf','w')
 	f.write(newdata)
-	f.write(newerdata)
 	f.close()
+
+	f = open('gearScript.sqf','r')
+	filedata = f.read()
+	f.close()
+	newdata = filedata.replace("_typesofUnit = toLower (__unit select 0);","_typesofUnit = toLower (_this select 0);")
+	f = open('gearScript.sqf','w')
+	f.write(newdata)
+	f.close()
+
 
 def renameFiles(actualUnitSide):
 	try: 
@@ -670,6 +676,7 @@ def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 		os.rename('groupmarkers.txt','f_setLocalGroupMarkers_'+unitAssociationToSideString +'.sqf')
 	except Exception as e:
 	   print("An error occured in the file re-naming. File probably already exists. Overwriting...")
+
 if __name__ == "__main__":
 	main()
 
