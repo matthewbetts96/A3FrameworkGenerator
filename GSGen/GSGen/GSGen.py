@@ -230,6 +230,10 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,e
 	_isSpecialist = isSpecialist.get()
 	_enablePopups = enablePopups.get()
 	_arsenal = textbox.get("1.0",'end-1c')
+	
+	#Removes everything to do with Voice, Face and Insignia because of potential problems https://community.bistudio.com/wiki/Arsenal#Modding
+	_arsenal = _arsenal[:_arsenal.find('comment "Set identity";')]
+	
 	if(_unit_role == ""):
 		messagebox.showinfo("Notice", "Unit Role is empty.")
 	elif(_arsenal == ""):
