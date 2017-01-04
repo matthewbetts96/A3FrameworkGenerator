@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import messagebox
 import sqlite3
 import os
+import re
 
 def main():
 	print("Starting up Database")
@@ -246,6 +247,7 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,e
 			if(faction == unit_side):
 				if(unitRole not in listOfRoles):
 					listOfRoles.append(unitRole)
+		#Stop people entering units that alreayd exist, this is a stop gap until I figure out how to update queries without going into the db file
 		if(_unit_role in listOfRoles):
 			messagebox.showinfo("Notice", "Error. Unit " + _unit_role + " has already been entered.")
 		else:
@@ -298,7 +300,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 	varF = 0
 
 	with open('gearScript.sqf', 'w') as file:
-		#clothes assignments
+		#Generate random clothes lists
 		#Uniforms
 		file.write('_uniforms = ["')
 		for row in cur.execute("SELECT * FROM uniforms"):
@@ -396,9 +398,72 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 			if(faction == _unit_side):
 				file.write('case "' + unitRole + '": {\n')
 				file.write(arsenalPasteCode)
-				print("Created unit: {} on {}").format(unitRole,faction)
+				print("Created unit: " + unitRole + " on "+ faction)
 				file.write('};\n\n')
+		
+		#After unit cases are generated, generate the small/med/large ammo crates from the arsenal input
+		#We need to start by finding out what all the units were given in their gear 
+		crateItemsList = []
+		crateItems = ""
+		targetWord = ""
+		itemToInsert = ""
+		for row in cur.execute("SELECT * FROM units"):
+			faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+			if(faction == _unit_side):
+				crateItems = arsenalPasteCode.split()
+				targetWord = "addItemToUniform"
+				for i,w in enumerate(crateItems):
+					if w == targetWord:
+						itemToInsert = crateItems[i+1]
+						if itemToInsert not in crateItemsList:
+							crateItemsList.append(itemToInsert)
+				
+				i = 0
+				targetWord = "addItemToVest"
+				for i,w in enumerate(crateItems):
+					if w == targetWord:
+						itemToInsert = crateItems[i+1]
+						if itemToInsert not in crateItemsList:
+							crateItemsList.append(itemToInsert)
 
+				i = 0
+				targetWord = "addItemToBackpack"
+				for i,w in enumerate(crateItems):
+					if w == targetWord:
+						itemToInsert = crateItems[i+1]
+						if itemToInsert not in crateItemsList:
+							crateItemsList.append(itemToInsert)
+						
+		#Now we need to remove the undesirable parts such as ;, } and ""
+		updatedItemList = []
+		for i,w in enumerate(crateItemsList):
+			charItems = list(w)
+			charItems = [x for x in charItems if x != '"']
+			charItems = [x for x in charItems if x != '}']
+			charItems = [x for x in charItems if x != '{']
+			charItems = [x for x in charItems if x != ';']
+			charItems = [x for x in charItems if x != ']']
+			charItems = [x for x in charItems if x != '[']
+			joinedChars = "".join(charItems)
+			updatedItemList.append(joinedChars)
+			
+		file.write('case "crate_small": {\n')
+		file.write('clearWeaponCargoGlobal this;\nclearMagazineCargoGlobal this;\nclearItemCargoGlobal this;\nclearBackpackCargoGlobal this;\n')
+		for item in updatedItemList:
+			file.write('this addItemCargoGlobal ["' + item + '", 5];\n')
+		file.write('};\n\n')
+
+		file.write('case "crate_med": {\n')
+		file.write('clearWeaponCargoGlobal this;\nclearMagazineCargoGlobal this;\nclearItemCargoGlobal this;\nclearBackpackCargoGlobal this;\n')
+		for item in updatedItemList:
+			file.write('this addItemCargoGlobal ["' + item + '", 10];\n')
+		file.write('};\n\n')
+
+		file.write('case "crate_large": {\n')
+		file.write('clearWeaponCargoGlobal this;\nclearMagazineCargoGlobal this;\nclearItemCargoGlobal this;\nclearBackpackCargoGlobal this;\n')
+		for item in updatedItemList:
+			file.write('this addItemCargoGlobal ["' + item + '", 20];\n')
+		file.write('};\n\n')
 
 		#default
 		file.write('default {\n_unit addmagazines ["30Rnd_65x39_caseless_mag",7];\n_unit addweapon "arifle_MX_pointer_F";\n_unit selectweapon primaryweapon _unit;\n')
@@ -418,6 +483,7 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 		renameFiles(actualUnitSide)
 		generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups)
 
+#Creates the fn_assignGear file
 def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups):
 	createdSides = []
 
@@ -443,7 +509,8 @@ def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enable
 		file.close()
 	if(_enablePopups == True):
 		messagebox.showinfo("Notice", "AssignGear files built successfully!")
-	
+
+#Function to replace 'this' with '_unit' in most cases 
 def replaceThis():
 	f = open('gearScript.sqf','r')
 	filedata = f.read()
@@ -469,7 +536,6 @@ def replaceThis():
 	f = open('gearScript.sqf','w')
 	f.write(newdata)
 	f.close()
-
 
 def renameFiles(actualUnitSide):
 	try: 
@@ -636,6 +702,7 @@ being the leader of the squad to which the marker will be attached too.\n\nExamp
 def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 	sql = sqlite3.connect('unit_database.db')
 	cur = sql.cursor()
+	
 	#Test input
 	#ASL,b_hq,ColorYellow,sl,m:A1,b_hq,ColorBlue,ftl,m,r,r,r,ar,aar
 	with open('unitsInit.txt', 'w') as file:
@@ -651,9 +718,10 @@ def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 			indivdualSquads = indivdualSquads[3:]
 			file.write("----------------------" + squadName + "----------------------\n")
 			for member in indivdualSquads:
-				file.write(_unit_side + "_" + squadName + '= group this; ["' + member + '",this,"' + _unit_side + '"] call fn_fnc_assignGear; ')
+				file.write(_unit_side + "_" + squadName + '= group this; ["' + member + '",this,"' + _unit_side + '"] call f_fnc_assignGear; ')
 						
-				#Opens DB
+				#Opens DB and does stuff
+				#I should really make these comments better, eh, I'll do it later
 				for row in cur.execute("SELECT * FROM units"):
 					faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
 					if(faction ==_unit_side):
@@ -688,6 +756,7 @@ def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 						if(unitRole == member):
 							if(isSpecialist == "1"):
 								file.write('["' + _unit_side + '_' + squadName + '_' + unitRole + '","' + markerType + '","' + squadName + unitRole + '","'+  markerColour + '"] spawn f_fnc_localSpecialistMarker;\n')
+	
 	try: 
 		os.rename('groupmarkers.txt','f_setLocalGroupMarkers_'+unitAssociationToSideString +'.sqf')
 	except Exception as e:
