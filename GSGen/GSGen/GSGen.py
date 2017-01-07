@@ -260,8 +260,7 @@ def submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,e
 			if(_enablePopups == True):
 				messagebox.showinfo("Notice", "Arsenal Inserted Successfully!")
 				print("Inserted unit on {} side with {} role.".format(_unit_side,_unit_role))
-		
-		
+				
 def submitGear(unit_side,uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,cur,sql,enablePopups):
 	_uniform = uniformEntry.get()
 	_vests = vestEntry.get()
@@ -481,10 +480,10 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 		file.close()
 		replaceThis()
 		renameFiles(actualUnitSide)
-		generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups)
+		generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups,dataWindow)
 
 #Creates the fn_assignGear file
-def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups):
+def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enablePopups,dataWindow):
 	createdSides = []
 
 	with open('fn_assignGear.sqf', 'w') as file:
@@ -509,6 +508,7 @@ def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enable
 		file.close()
 	if(_enablePopups == True):
 		messagebox.showinfo("Notice", "AssignGear files built successfully!")
+		platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow)	
 
 #Function to replace 'this' with '_unit' in most cases 
 def replaceThis():
