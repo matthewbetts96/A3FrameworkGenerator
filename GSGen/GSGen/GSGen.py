@@ -410,57 +410,75 @@ def generateGS(cur,sql,unit_side,unitAssociationToSideString,dataWindow,enablePo
 			faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
 			if(faction == _unit_side):
 				crateItems = arsenalPasteCode.split()
+				
 				targetWord = "addItemToUniform"
 				for i,w in enumerate(crateItems):
 					if w == targetWord:
 						itemToInsert = crateItems[i+1]
-						if itemToInsert not in crateItemsList:
-							crateItemsList.append(itemToInsert)
-				
+						charItems = list(itemToInsert)
+						charItems = [x for x in charItems if x != '"']
+						charItems = [x for x in charItems if x != '}']
+						charItems = [x for x in charItems if x != '{']
+						charItems = [x for x in charItems if x != ';']
+						charItems = [x for x in charItems if x != ']']
+						charItems = [x for x in charItems if x != '[']
+						joinedChars = "".join(charItems)
+						print(joinedChars)
+						if joinedChars not in crateItemsList:
+							crateItemsList.append(joinedChars)
+	
 				i = 0
 				targetWord = "addItemToVest"
 				for i,w in enumerate(crateItems):
 					if w == targetWord:
 						itemToInsert = crateItems[i+1]
-						if itemToInsert not in crateItemsList:
-							crateItemsList.append(itemToInsert)
+						charItems = list(itemToInsert)
+						charItems = [x for x in charItems if x != '"']
+						charItems = [x for x in charItems if x != '}']
+						charItems = [x for x in charItems if x != '{']
+						charItems = [x for x in charItems if x != ';']
+						charItems = [x for x in charItems if x != ']']
+						charItems = [x for x in charItems if x != '[']
+						joinedChars = "".join(charItems)
+						print(joinedChars)
+						if joinedChars not in crateItemsList:
+							crateItemsList.append(joinedChars)
 
 				i = 0
 				targetWord = "addItemToBackpack"
 				for i,w in enumerate(crateItems):
 					if w == targetWord:
 						itemToInsert = crateItems[i+1]
-						if itemToInsert not in crateItemsList:
-							crateItemsList.append(itemToInsert)
-						
+						charItems = list(itemToInsert)
+						charItems = [x for x in charItems if x != '"']
+						charItems = [x for x in charItems if x != '}']
+						charItems = [x for x in charItems if x != '{']
+						charItems = [x for x in charItems if x != ';']
+						charItems = [x for x in charItems if x != ']']
+						charItems = [x for x in charItems if x != '[']
+						joinedChars = "".join(charItems)
+						print(joinedChars)
+						if joinedChars not in crateItemsList:
+							crateItemsList.append(joinedChars)
+		
+		print(crateItemsList)
 		#Now we need to remove the undesirable parts such as ;, } and ""
-		updatedItemList = []
-		for i,w in enumerate(crateItemsList):
-			charItems = list(w)
-			charItems = [x for x in charItems if x != '"']
-			charItems = [x for x in charItems if x != '}']
-			charItems = [x for x in charItems if x != '{']
-			charItems = [x for x in charItems if x != ';']
-			charItems = [x for x in charItems if x != ']']
-			charItems = [x for x in charItems if x != '[']
-			joinedChars = "".join(charItems)
-			updatedItemList.append(joinedChars)
-			
+	
 		file.write('case "crate_small": {\n')
 		file.write('clearWeaponCargoGlobal this;\nclearMagazineCargoGlobal this;\nclearItemCargoGlobal this;\nclearBackpackCargoGlobal this;\n')
-		for item in updatedItemList:
+		for item in crateItemsList:
 			file.write('this addItemCargoGlobal ["' + item + '", 5];\n')
 		file.write('};\n\n')
 
 		file.write('case "crate_med": {\n')
 		file.write('clearWeaponCargoGlobal this;\nclearMagazineCargoGlobal this;\nclearItemCargoGlobal this;\nclearBackpackCargoGlobal this;\n')
-		for item in updatedItemList:
+		for item in crateItemsList:
 			file.write('this addItemCargoGlobal ["' + item + '", 10];\n')
 		file.write('};\n\n')
 
 		file.write('case "crate_large": {\n')
 		file.write('clearWeaponCargoGlobal this;\nclearMagazineCargoGlobal this;\nclearItemCargoGlobal this;\nclearBackpackCargoGlobal this;\n')
-		for item in updatedItemList:
+		for item in crateItemsList:
 			file.write('this addItemCargoGlobal ["' + item + '", 20];\n')
 		file.write('};\n\n')
 
@@ -493,7 +511,7 @@ def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enable
 
 		#Insignia setup 
 		#WARNING -not even sure if this works, no guarantees 
-		file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
+		#file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
 		
 		file.write('if !(local _unit) exitWith {};\n')
 		file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
@@ -508,7 +526,7 @@ def generateFn_AssignGear(cur,sql,_unit_side,unitAssociationToSideString,_enable
 		file.close()
 	if(_enablePopups == True):
 		messagebox.showinfo("Notice", "AssignGear files built successfully!")
-		platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow)	
+	platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow)	
 
 #Function to replace 'this' with '_unit' in most cases 
 def replaceThis():
