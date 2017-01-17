@@ -24,35 +24,38 @@ def main():
 def chooseSide(cur,sql,factionstring):
 	sideWindow = tk.Tk()
 	sideWindow.title("Framework Generator")
-	sideWindow.minsize(height=200, width=300)
-	sideWindow.maxsize(height=200, width=300)
+	sideWindow.minsize(height=400, width=400)
+	sideWindow.maxsize(height=400, width=400)
 	
 	#Initalise Checkbox Variables
 	unitAssociationToSide = IntVar()
 	unitAssociationToSide.set(0)
+	
+	#Calls function to display all factions in the Database
+	displayFactions(sideWindow)
 
-	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks to Poulern\n for his help with the sqf.\n\nEnter a faction name, select which side it is associated with and hit 'Start' to begin.", fg="red")
-	aboutLabel.place(relx=0.4, rely=0)
+	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks to Poulern for his help with the sqf.\n\nEnter a faction name, select which side it is associated with and hit 'Start' to begin.", fg="red")
+	aboutLabel.place(relx=0, rely=0)
 
 	unitSideLabel = Label(sideWindow, text = "Faction:")
-	unitSideLabel.place(relx=0, rely=0)
+	unitSideLabel.place(relx=0, rely=0.35)
 	unitSideEntry = tk.Entry(sideWindow)
-	unitSideEntry.place(relx=0, rely=0.1)
+	unitSideEntry.place(relx=0, rely=0.4)
 	unitSideEntry.insert(0, factionstring)
 
-	unitSideLabel = Label(sideWindow, text = "Unit is associated with:")
-	unitSideLabel.place(relx=0, rely=0.2)
+	unitSideLabel = Label(sideWindow, text = "Faction is associated with:")
+	unitSideLabel.place(relx=0, rely=0.5)
 	
 	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 0, text= "West")
-	unitSideRadio.place(relx=0, rely=0.32)
+	unitSideRadio.place(relx=0, rely=0.55)
 	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 1, text= "East")
-	unitSideRadio.place(relx=0, rely=0.42)
+	unitSideRadio.place(relx=0, rely=0.62)
 	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 2, text= "Independent")
-	unitSideRadio.place(relx=0, rely=0.52)
+	unitSideRadio.place(relx=0, rely=0.69)
 
 	#Progress to next stage
 	chooseSideButton = tk.Button(sideWindow,text="Start",command=lambda: closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide))
-	chooseSideButton.place(relx=0.05, rely=0.7)
+	chooseSideButton.place(relx=0.05, rely=0.75)
 
 	sideWindow.mainloop()
 	
@@ -612,6 +615,28 @@ def displayUnits(cur,dataWindow,unit_side):
 	unitsideLabel1.place(relx=0, rely=0.5)
 	listOfUnitsLabel = Label(dataWindow)
 	listOfUnitsLabel.place(relx=0.05, rely=0.55)
+	for val in listOfUnits1:
+		text = listOfUnitsLabel.cget("text") + val + '\n'
+		listOfUnitsLabel.configure(text=text)
+
+def displayFactions(sideWindow):
+	sql = sqlite3.connect('unit_database.db')
+	cur = sql.cursor()
+
+	#Get a list of all unique units in this faction
+	listOfUnits1 = []
+	for row in cur.execute("SELECT * FROM units"):
+		faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+		#Add them all to a list if they are not already in the list
+		if(unitRole not in listOfUnits1):
+			listOfUnits1.append(faction)
+
+	unitsideLabel1 = Label(sideWindow, text = 'Factions currently in the database are:', fg="green",relief=RIDGE)
+	unitsideLabel1.place(relx=0.47, rely=0)
+	listOfUnitsLabel = Label(sideWindow)
+	listOfUnitsLabel.place(relx=0.65, rely=0.06)
+	
+	#Append all list values to the Label
 	for val in listOfUnits1:
 		text = listOfUnitsLabel.cget("text") + val + '\n'
 		listOfUnitsLabel.configure(text=text)
