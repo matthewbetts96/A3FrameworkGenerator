@@ -31,7 +31,7 @@ def chooseSide(cur,sql,factionstring):
 	unitAssociationToSide = IntVar()
 	unitAssociationToSide.set(0)
 
-	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks to Poulern\n for his contributions.\n\nEnter a faction name, select who it is associated with and hit 'Start' to begin.", fg="red")
+	aboutLabel = Message(sideWindow, text = "GearScript/Marker Generator written by Matthew Betts with special thanks to Poulern\n for his help with the sqf.\n\nEnter a faction name, select which side it is associated with and hit 'Start' to begin.", fg="red")
 	aboutLabel.place(relx=0.4, rely=0)
 
 	unitSideLabel = Label(sideWindow, text = "Faction:")
@@ -43,11 +43,11 @@ def chooseSide(cur,sql,factionstring):
 	unitSideLabel = Label(sideWindow, text = "Unit is associated with:")
 	unitSideLabel.place(relx=0, rely=0.2)
 	
-	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 0, text= "BLUFOR")
+	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 0, text= "West")
 	unitSideRadio.place(relx=0, rely=0.32)
-	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 1, text= "OPFOR")
+	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 1, text= "East")
 	unitSideRadio.place(relx=0, rely=0.42)
-	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 2, text= "INDFOR")
+	unitSideRadio = Radiobutton(sideWindow, variable=unitAssociationToSide, value = 2, text= "Independent")
 	unitSideRadio.place(relx=0, rely=0.52)
 
 	#Progress to next stage
@@ -68,8 +68,8 @@ def closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide):
 		messagebox.showinfo("Notice", "Faction name is empty. Please fill and resubmit.")
 		sideWindow.destroy()
 		chooseSide(cur,sql,_factionstring)
-	elif (" " in unit_side or "." in unit_side):
-		messagebox.showinfo("Notice", "Faction name contains space. Please remove space and resubmit.")
+	elif (" " in unit_side or "." in unit_side or "/" in unit_side or "<" in unit_side or ">" in unit_side):
+		messagebox.showinfo("Notice", "Faction name contains invalid character. Please remove and resubmit.")
 		sideWindow.destroy()
 		chooseSide(cur,sql,_factionstring)
 	else:
@@ -81,7 +81,7 @@ def closeSideWindow(sideWindow,cur,sql,unitSideEntry,unitAssociationToSide):
 		if(unitAssociationToSide.get() == 1):
 			unitAssociationToSideString = "East"
 		if(unitAssociationToSide.get() == 2):
-		   unitAssociationToSideString = "Independant"
+		   unitAssociationToSideString = "Independent"
 		enterData(cur,sql,unit_side,unitAssociationToSideString)
 		
 def enterData(cur,sql,unit_side,unitAssociationToSideString):
@@ -127,9 +127,9 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	textbox = Text(dataWindow, width = 60, height = 10, wrap = WORD)
 	textbox.place(relx=0.25, rely=0.1)
 
-	aboutLabel = Message(dataWindow, text = "Note: 'Generic clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
-		\nIf the box is ticked when a unit is submitted, generic clothes are given to it. This overwrites the clothes that are already given to it.\
-		\nTo insert Generic Clothes, press the 'Insert Clothes' button to the left.", fg="red")
+	aboutLabel = Message(dataWindow, text = "Note: 'Random clothes' are a set of vests/uniforms etc that are randomly selected from the ones that you can manually enter. \
+		\nIf the box is ticked when a unit is submitted, random clothes are given to it. This overwrites the clothes that are already given to it.\
+		\nTo insert Random Clothes, press the 'Insert Clothes' button in the top left.", fg="red")
 	aboutLabel.place(relx=0.65, rely=0.45)
 
 	#Unit role
@@ -155,7 +155,7 @@ def enterData(cur,sql,unit_side,unitAssociationToSideString):
 	enablePopupsCheckbox1.place(relx=0.25, rely=0.9)
 
 	#Check if unit is using generic clothes for faction
-	isGenericClothes = Checkbutton(dataWindow, variable=isGeneric, onvalue = 1, offvalue = 0, text= "Generic Clothes?")
+	isGenericClothes = Checkbutton(dataWindow, variable=isGeneric, onvalue = 1, offvalue = 0, text= "Unit has Random Clothes?")
 	isGenericClothes.place(relx=0.65, rely=0.77)
 
 	submitArsenalButton = tk.Button(dataWindow,text="Submit Arsenal",command=lambda: submitArsenal(cur,sql,textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePopups,dataWindow))
@@ -218,7 +218,7 @@ def enterGear(unit_side,cur,sql,dataWindow,unitAssociationToSideString):
 	factionChangeButton = tk.Button(gearWindow,text="Change Faction", fg="red", command=lambda: gearToFaction(cur,sql,gearWindow))
 	factionChangeButton.grid(row=0, column=3, sticky=W)
 	#Change to guns window
-	gunChangeButton = tk.Button(gearWindow,text="Change to Guns", fg="red", command=lambda: gearToUnit(cur,sql,unit_side,unitAssociationToSideString,gearWindow))
+	gunChangeButton = tk.Button(gearWindow,text="Insert Unit(s)", fg="red", command=lambda: gearToUnit(cur,sql,unit_side,unitAssociationToSideString,gearWindow))
 	gunChangeButton.grid(row=1, column=3, sticky=W)
 
 	clearBoxesButton2 = tk.Button(gearWindow,text="Clear All Boxes",command=lambda: clearVests(uniformEntry,vestEntry,backpackEntry,helmetEntry,glassesEntry,enablePopups))
@@ -683,7 +683,7 @@ def platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow):
 	
 	coloursLabel1 = Label(platoonGenWindow, text = 'Markers:',relief=RIDGE)
 	coloursLabel1.place(relx=0.1, rely=0.25)
-	coloursLabel1 = Label(platoonGenWindow, text = 'b_hq = Headquarters')
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_hq = HQ')
 	coloursLabel1.place(relx=0.1, rely=0.3)
 	coloursLabel1 = Label(platoonGenWindow, text = 'b_support = Support units (MMG,HMG)')
 	coloursLabel1.place(relx=0.1, rely=0.35)
@@ -705,13 +705,15 @@ def platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow):
 	coloursLabel1.place(relx=0.1, rely=0.75)
 	coloursLabel1 = Label(platoonGenWindow, text = 'b_art = Artillery')
 	coloursLabel1.place(relx=0.1, rely=0.8)
+	coloursLabel1 = Label(platoonGenWindow, text = 'b_med = Medic')
+	coloursLabel1.place(relx=0.1, rely=0.85)
 
 	
 	squadLabel = Label(platoonGenWindow, text = "In the text box below, please define how you want your platoon to be set out.\n Init lines and marker files will automatically be generated for you. \n\n\
 Rules for defining.\n\n All variables must be seperated by a comma (,). The end (and subsiquent start) of a new squad, is denoted by a colon (:). \nThe first variable in each squad is it's name (ASL/A1/A2 etc) \
 The next is it's marker type, then followed by it's colour. \nValid inputs of these are listed to the left. After that, you define the units in the squad (again seperated by a comma)\n with the starting unit \
 being the leader of the squad to which the marker will be attached too.\n\nExample input: ASL,b_hq,ColorYellow,sl,m:A1,b_hq,ColorBlue,ftl,m,r,r,r,ar,aar")
-	squadLabel.place(relx=0.17, rely=0)
+	squadLabel.place(relx=0.20, rely=0)
 	textbox = Text(platoonGenWindow, width = 60, height = 15, wrap = WORD)
 	textbox.place(relx=0.35, rely=0.35)
 	passString = tk.Button(platoonGenWindow,text="Parse Platoon String", fg="red", command=lambda: parseSquadString(textbox,_unit_side,unitAssociationToSideString))
@@ -773,7 +775,7 @@ def parseSquadString(textbox,_unit_side,unitAssociationToSideString):
 					if(faction == _unit_side):
 						if(unitRole == member):
 							if(isSpecialist == "1"):
-								file.write('["' + _unit_side + '_' + squadName + '_' + unitRole + '","' + markerType + '","' + squadName + unitRole + '","'+  markerColour + '"] spawn f_fnc_localSpecialistMarker;\n')
+								file.write('["' + _unit_side + '_' + squadName + '_' + unitRole + '","b_med","' + squadName + unitRole + '","ColorBlack"] spawn f_fnc_localSpecialistMarker;\n')
 	
 	try: 
 		os.rename('groupmarkers.txt','f_setLocalGroupMarkers_'+unitAssociationToSideString +'.sqf')
