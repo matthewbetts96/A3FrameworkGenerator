@@ -513,7 +513,7 @@ def generateGS(unit_side,unitAssociationToSideString,dataWindow,enablePopups):
 		if(_enablePopups == True):
 			print("Faction AssignGear file built successfully!")
 			messagebox.showinfo("Notice", "Faction AssignGear file built successfully!")
-		#generateFn_AssignGear(_unit_side,unitAssociationToSideString,_enablePopups,dataWindow)
+		generateFn_AssignGear(_unit_side,unitAssociationToSideString,_enablePopups,dataWindow)
 		print("")
 
 def selectFnAssignFaction():
