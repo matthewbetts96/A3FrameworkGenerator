@@ -236,6 +236,9 @@ def submitArsenal(textbox,unit_side,unitRoleEnt,isGeneric,isSpecialist,enablePop
 	_enablePopups = enablePopups.get()
 	_arsenal = textbox.get("1.0",'end-1c')
 	
+	#Force unit role to lowercase
+	_unit_role = _unit_role.lower()
+
 	#Removes everything to do with Voice, Face and Insignia because of potential problems https://community.bistudio.com/wiki/Arsenal#Modding
 	_arsenal = _arsenal[:_arsenal.find('comment "Set identity";')]
 	
