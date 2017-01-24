@@ -56,6 +56,9 @@ def chooseSide(factionstring):
 	#Progress to next stage
 	chooseSideButton = tk.Button(sideWindow,text="Start",command=lambda: closeSideWindow(sideWindow,unitSideEntry,unitAssociationToSide))
 	chooseSideButton.place(relx=0.05, rely=0.75)
+	
+	selectFnAssign = tk.Button(sideWindow,text="placeholdertext",command=lambda: selectFnAssignFaction(sideWindow))
+	selectFnAssign.place(relx=0.05, rely=0.9)
 
 	sideWindow.mainloop()
 	
@@ -513,51 +516,60 @@ def generateGS(unit_side,unitAssociationToSideString,dataWindow,enablePopups):
 		if(_enablePopups == True):
 			print("Faction AssignGear file built successfully!")
 			messagebox.showinfo("Notice", "Faction AssignGear file built successfully!")
-		generateFn_AssignGear(_unit_side,unitAssociationToSideString,_enablePopups,dataWindow)
+		#generateFn_AssignGear(_unit_side,unitAssociationToSideString,_enablePopups,dataWindow)
 		print("")
 
-def selectFnAssignFaction():
+def selectFnAssignFaction(sideWindow):
+	sideWindow.destroy()
 	sql = sqlite3.connect('unit_database.db')
 	cur = sql.cursor()
-
-	var = StringVar()
-	i = 0
-	for item in cb_strings:
-		var.set(cb_strings[i])
-		i = i + 1
-		button = Radiobutton(root, text=item, variable=var, value = i, command=sel(var))
+	root = tk.Tk()
+	root.title("Framework Generator")
+	Label = Message(root, text = "Please select the factions for which you want to generate").pack()
+	factionList = []
+	for row in cur.execute("SELECT * FROM units"):
+		faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
+		if(faction not in factionList):
+			factionList.append(faction)
+	var = dict()
+	count = 1 	
+	for item in factionList:
+		var[item] = IntVar()
+		button = Checkbutton(root, text=item, variable=var[item])
 		button.pack(anchor=W)
+		count += 1
+	submitArsenalButton = tk.Button(root,text="Generate Fn_AssignGear",command=lambda: generateFn_AssignGear(var))
+	submitArsenalButton.pack()
+	root.mainloop()
 	
-#Creates the fn_assignGear file
-def generateFn_AssignGear(_unit_side,unitAssociationToSideString,_enablePopups,dataWindow):
-	sql = sqlite3.connect('unit_database.db')
-	cur = sql.cursor()
+def generateFn_AssignGear(var):
+	chosenFactions = []
+	for item in var:
+		print("item number = " + item)
+		print(var[item].get())
+		if(var[item].get() == 1):
+			chosenFactions.append(item)
+	print(chosenFactions)	
+	if(len(chosenFactions) > 0):
+		with open('fn_assignGear.sqf', 'w') as file:
+			file.write('private ["_faction","_typeofUnit","_unit"];\n\n')
+			file.write('_typeofUnit = toLower (_this select 0);\n_unit = _this select 1;\n\n')
+			file.write('_faction = toLower (faction _unit);\nif(count _this > 2) then\n{\n_faction = toLower (_this select 2);\n};')
 
-	createdSides = []
-
-	with open('fn_assignGear.sqf', 'w') as file:
-		file.write('private ["_faction","_typeofUnit","_unit"];\n\n')
-		file.write('_typeofUnit = toLower (_this select 0);\n_unit = _this select 1;\n\n')
-		file.write('_faction = toLower (faction _unit);\nif(count _this > 2) then\n{\n_faction = toLower (_this select 2);\n};')
-
-		#Insignia setup 
-		#WARNING -not even sure if this works, no guarantees 
-		#file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
-		
-		file.write('if !(local _unit) exitWith {};\n')
-		file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
-		factionList = []
-		for row in cur.execute("SELECT * FROM units"):
-			faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
-			if faction not in factionList:
-				factionList.append(faction)
+			#Insignia setup 
+			#WARNING -not even sure if this works, no guarantees 
+			#file.write('[_unit,_typeofUnit] spawn {\n#include "f_assignInsignia.sqf"\n};\n')
+			
+			file.write('if !(local _unit) exitWith {};\n')
+			file.write('_unit setVariable ["f_var_assignGear",_typeofUnit,true];\n')
+			for faction in chosenFactions:
 				file.write('if (_faction == "' + faction + '") then {\n')
 				file.write('#include "f_assignGear_' + faction + '.sqf"\n};\n')
-		file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
-		file.close()
-	if(_enablePopups == True):
-		messagebox.showinfo("Notice", "AssignGear files built successfully!")
-	platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow)	
+			file.write('_unit setVariable ["f_var_assignGear_done",false,true];\n')
+			file.close()
+			messagebox.showinfo("Notice", "Fn_AssignGear files built successfully!")
+	else:
+		messagebox.showinfo("Notice", "Please select at least one faction.")
 
 #Start of platoon Generator
 def platoonGenStart(_unit_side,unitAssociationToSideString,dataWindow):
@@ -828,7 +840,7 @@ def displayFactions(sideWindow):
 	for row in cur.execute("SELECT * FROM units"):
 		faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
 		#Add them all to a list if they are not already in the list
-		if(unitRole not in listOfUnits1):
+		if(faction not in listOfUnits1):
 			listOfUnits1.append(faction)
 
 	unitsideLabel1 = Label(sideWindow, text = 'Factions currently in the database are:', fg="green",relief=RIDGE)
@@ -843,4 +855,3 @@ def displayFactions(sideWindow):
 
 if __name__ == "__main__":
 	main()
-
