@@ -56,9 +56,6 @@ def chooseSide(factionstring):
 	#Progress to next stage
 	chooseSideButton = tk.Button(sideWindow,text="Start",command=lambda: closeSideWindow(sideWindow,unitSideEntry,unitAssociationToSide))
 	chooseSideButton.place(relx=0.05, rely=0.75)
-	
-	selectFnAssign = tk.Button(sideWindow,text="placeholdertext",command=lambda: selectFnAssignFaction(sideWindow))
-	selectFnAssign.place(relx=0.05, rely=0.9)
 
 	sideWindow.mainloop()
 	
@@ -515,12 +512,23 @@ def generateGS(unit_side,unitAssociationToSideString,dataWindow,enablePopups):
 		renameFiles(actualUnitSide)
 		if(_enablePopups == True):
 			print("Faction AssignGear file built successfully!")
-			messagebox.showinfo("Notice", "Faction AssignGear file built successfully!")
-		#generateFn_AssignGear(_unit_side,unitAssociationToSideString,_enablePopups,dataWindow)
-		print("")
+			choiceAfterGenerating(dataWindow)
+					
+def choiceAfterGenerating(dataWindow):
+	dataWindow.destroy()
+	choiceWindow = tk.Tk()
+	choiceWindow.title("Framework Generator - Platoon Generator")
+	choiceWindow.minsize(height=100, width=200)
+	choiceWindow.maxsize(height=100, width=200)
+	Label = Message(choiceWindow, text = "Do you want to input any more factions?")
+	Label.place(relx=0.25,rely=0)
+	yesButton = tk.Button(choiceWindow,text="Yes",command=lambda: main())
+	yesButton.place(relx=0.2,rely=0.5)
+	noButton = tk.Button(choiceWindow,text="No",command=lambda: selectFnAssignFaction(choiceWindow))
+	noButton.place(relx=0.6,rely=0.5)
 
-def selectFnAssignFaction(sideWindow):
-	sideWindow.destroy()
+def selectFnAssignFaction(choiceWindow):
+	choiceWindow.destroy()
 	sql = sqlite3.connect('unit_database.db')
 	cur = sql.cursor()
 	root = tk.Tk()
@@ -531,13 +539,11 @@ def selectFnAssignFaction(sideWindow):
 		faction, unitRole, arsenalPasteCode, genericClothes, isSpecialist = (row)
 		if(faction not in factionList):
 			factionList.append(faction)
-	var = dict()
-	count = 1 	
+	var = dict()	
 	for item in factionList:
 		var[item] = IntVar()
 		button = Checkbutton(root, text=item, variable=var[item])
 		button.pack(anchor=W)
-		count += 1
 	submitArsenalButton = tk.Button(root,text="Generate Fn_AssignGear",command=lambda: generateFn_AssignGear(var))
 	submitArsenalButton.pack()
 	root.mainloop()
@@ -548,8 +554,7 @@ def generateFn_AssignGear(var):
 		print("item number = " + item)
 		print(var[item].get())
 		if(var[item].get() == 1):
-			chosenFactions.append(item)
-	print(chosenFactions)	
+			chosenFactions.append(item)	
 	if(len(chosenFactions) > 0):
 		with open('fn_assignGear.sqf', 'w') as file:
 			file.write('private ["_faction","_typeofUnit","_unit"];\n\n')
